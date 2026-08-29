@@ -26,6 +26,33 @@ birthday party; don't reuse the pattern where it matters.
 The host's lobby screen prints the guest link, so you can read it out or
 turn it into a QR code without typing anything.
 
+## Scan-to-join QR
+
+The host screen shows a QR code of the guest link in the top-left corner, on
+the lobby and on every question — so anyone arriving late can point a camera
+at the big screen and be voting in seconds, without you reading a URL aloud.
+
+It's generated in the page (qrcode-generator, MIT, inlined — no QR service is
+contacted and nothing about your party leaves the browser), and it encodes
+whatever URL the host page is actually served from, so it can't go stale.
+It's hidden below 720px wide, since a phone has no use for it.
+
+## Music
+
+The host screen has a ♪ play/pause button, top-right. It plays
+`music/theme.mp3` on a loop, on the **host device only** — that's the one
+attached to speakers, and thirty phones playing the same track slightly out
+of sync would be a mess.
+
+**No audio file is committed.** A Hedwig's Theme recording is copyrighted and
+not mine to distribute, so drop in a copy you're entitled to use — see
+`music/README.md`. Until you do, the button says "no music file" and does
+nothing; it starts working the moment the file is there, no code change.
+
+Browsers block audio until someone interacts with the page. The host's click
+*is* that interaction, so it just works — but the host has to click it; it
+can't start on its own.
+
 ## The 20-second timer
 
 Each question runs a `QUESTION_SECONDS` countdown (20 by default, at the top
