@@ -11,7 +11,9 @@ tallies the whole night. Rename `PARENT_A` / `PARENT_B` at the top of
 
 - **Host** opens the *host link* on a laptop/TV and drives the pacing:
   Begin Voting → Reveal Results → Next Question, ×14, then an end screen.
-- **Guests** open the *guest link* on their phones and tap A or B.
+- **Guests** open the *guest link* on their phones and tap one of the two
+  photos — every question is Anchit's picture against Gunjan's, with the
+  option written across the bottom of each.
 - Everything syncs live across every device via Firebase Realtime Database.
 
 ## The two links

@@ -1,9 +1,15 @@
 # Parent portraits
 
-Two files, shown side by side on the closing scoreboard:
+Four files, two per parent:
 
-- `anchit.jpg` — option A, framed in Gryffindor crimson
-- `gunjan.jpg` — option B, framed in Slytherin emerald
+- `anchit.jpg` / `gunjan.jpg` — square, the round portraits on the closing
+  scoreboard (crimson ring for A, emerald for B)
+- `anchit-card.jpg` / `gunjan-card.jpg` — the photo you tap to vote, shown
+  behind each option on every question
+
+All four are cropped from the Hogwarts shoot. To swap them, replace the files
+(same names) or repoint `PARENT_A_PIC` / `PARENT_A_CARD` and their B
+equivalents in `index.html`. The full-size originals aren't committed.
 
 They're rendered as circles, so **square crops work best** — a head-and-
 shoulders shot centred on the face. Anything from about 400×400 up is plenty;
