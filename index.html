@@ -109,11 +109,11 @@
 
   .qmeta{
     text-align:center; font-variant:small-caps; letter-spacing:.2em;
-    color:var(--gold); font-size:clamp(.8rem,1.6vw,1rem); margin:0 0 .8em;
+    color:var(--gold); font-size:clamp(.8rem,1.6vw,1rem); margin:0 0 .5em;
   }
   .question{
-    text-align:center; font-size:clamp(1.5rem,4.6vw,3rem); line-height:1.25;
-    margin:0 auto 1.1em; max-width:22em; font-weight:400; color:var(--cream);
+    text-align:center; font-size:clamp(1.35rem,4.4vw,3rem); line-height:1.22;
+    margin:0 auto .7em; max-width:22em; font-weight:400; color:var(--cream);
     text-shadow:0 2px 24px rgba(0,0,0,.5);
   }
   .live-note{
@@ -124,7 +124,7 @@
   @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
 
   /* ---- Option cards (guest voting buttons) ---- */
-  .options{display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2.5vw,24px)}
+  .options{display:grid; grid-template-columns:1fr 1fr; gap:clamp(10px,2.5vw,24px)}
   .opt{
     border-radius:18px; padding:0; text-align:center; overflow:hidden;
     border:2px solid rgba(255,255,255,.16); position:relative;
@@ -133,11 +133,11 @@
     color:var(--cream); background:rgba(0,0,0,.28);
   }
   /* The photograph itself carries nothing — no text, no scrim, no overlay. */
-  .optframe{display:block; position:relative; width:100%; aspect-ratio:16/11;
-    max-height:26vh; overflow:hidden}
+  .optframe{display:block; position:relative; width:100%; aspect-ratio:5/4;
+    max-height:36vh; overflow:hidden}
   .optpic{
     position:absolute; inset:0; width:100%; height:100%;
-    object-fit:cover; object-position:center 34%;
+    object-fit:cover; object-position:center 40%;
   }
   .opt.nopic .optframe{display:none}
   /* Only shown if a photo is missing, so the card is never a blank slab. */
@@ -219,8 +219,8 @@
 
   .controls{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:.6em}
   .guest-msg{
-    text-align:center; font-size:clamp(1.05rem,2.6vw,1.4rem); color:var(--gold-lt);
-    font-style:italic; margin:1.6em auto 0; max-width:26em; line-height:1.6;
+    text-align:center; font-size:clamp(.98rem,2.4vw,1.4rem); color:var(--gold-lt);
+    font-style:italic; margin:.9em auto 0; max-width:26em; line-height:1.5;
   }
   .split{
     text-align:center; font-size:clamp(1.3rem,5vw,2rem); margin:.2em 0 .1em; letter-spacing:.02em;
@@ -228,7 +228,7 @@
   .split .a{color:var(--gryff-1)} .split .b{color:#57a86f} .split .dash{color:var(--gold); margin:0 .4em}
   /* ---- countdown ---- */
   .timer{
-    display:block; width:max-content; margin:0 auto 1.1em; text-align:center;
+    display:block; width:max-content; margin:0 auto .7em; text-align:center;
     font-variant:small-caps; letter-spacing:.18em; color:var(--gold-lt);
     border:1px solid var(--line); border-radius:999px; padding:.3em 1.1em;
     background:rgba(0,0,0,.25); font-size:clamp(.9rem,2.2vw,1.15rem);
@@ -239,7 +239,7 @@
     background:transparent; animation:none}
   @keyframes tick{0%,100%{opacity:1}50%{opacity:.55}}
   .timerbar{
-    width:min(560px,90%); height:4px; margin:0 auto 1.6em; border-radius:999px;
+    width:min(560px,90%); height:4px; margin:0 auto .9em; border-radius:999px;
     background:rgba(241,230,200,.12); overflow:hidden;
   }
   .timerbar span{
@@ -441,7 +441,13 @@
     .musicbtn{position:static; margin:1.2em auto 0; display:inline-flex}
   }
   @media (max-width:560px){
-    .options{grid-template-columns:1fr}
+    /* A phone has no room to spare: the two photos and the prompt have to
+       share one screen without scrolling during a 20-second vote. */
+    .wrap{padding-top:8px; padding-bottom:10px}
+    .options{grid-template-columns:1fr; gap:8px}
+    .timer{margin-bottom:.45em}
+    .timerbar{margin-bottom:.6em}
+    .guest-msg{margin-top:.6em}
     .vials{gap:18px}
   }
   @media (prefers-reduced-motion:reduce){
@@ -620,7 +626,7 @@ const STRINGS = {
     waitBody:(secs)=>`The host hasn't opened the first question yet. Keep this page open — it'll jump to the vote by itself. Every question is the same choice: tap ${PARENT_A} or tap ${PARENT_B}. You get ${secs} seconds each, so keep your thumb ready.`,
     qOf:(i,n)=>`Question ${i} of ${n}`,
     says:"says",              secsLeft:(n)=>`${n}s left`,          timesUp:"time's up",
-    tapFast:"Tap a face. One vote per question — choose wisely.",
+    tapFast:"Tap a face — one vote per question.",
     voteIn:"Vote received. Sit tight for the reveal…",
     tooLate:"Time's up — this one closed before you tapped. Next question shortly…",
     votesCast:(n)=>`${n} vote${n===1?"":"s"} cast`,
@@ -647,7 +653,7 @@ const STRINGS = {
     waitBody:(secs)=>`होस्ट ने अभी पहला सवाल खोला नहीं है। यह पेज खुला रहने दीजिए — सवाल आते ही यह अपने आप बदल जाएगा। हर सवाल में चुनाव एक ही है: ${PARENT_A_HI} या ${PARENT_B_HI}। हर सवाल के लिए ${secs} सेकंड मिलेंगे, इसलिए उँगली तैयार रखिए।`,
     qOf:(i,n)=>`सवाल ${i} / ${n}`,
     says:"का कहना है",         secsLeft:(n)=>`${n} सेकंड बाक़ी`,    timesUp:"समय ख़त्म",
-    tapFast:"चेहरा चुनिए। हर सवाल में सिर्फ़ एक वोट — सोच-समझकर।",
+    tapFast:"चेहरा चुनिए — हर सवाल में एक वोट।",
     voteIn:"वोट मिल गया। अब नतीजे का इंतज़ार कीजिए…",
     tooLate:"समय ख़त्म — इस बार वोट नहीं गिना गया। अगला सवाल बस आने ही वाला है…",
     votesCast:(n)=>`कुल ${n} वोट`,
