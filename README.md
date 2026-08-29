@@ -50,7 +50,8 @@ fine in practice for a family party, worth knowing if the repo stays up.
 
 Browsers block audio until someone interacts with the page. The host's click
 *is* that interaction, so it just works — but the host has to click it; it
-can't start on its own.
+can't start on its own. Pausing keeps your place in the track; play resumes
+from there.
 
 ## The 20-second timer
 
@@ -117,6 +118,9 @@ Add or remove questions freely — counts and the "of N" label follow the array.
 
 ## Notes
 
+- **Restart** sits next to the host's main button on every question, plus the
+  end screen. It takes two taps — the second confirms — and wipes every vote
+  back to the lobby. Guests can vote again immediately; nobody has to reload.
 - Guests can vote once per question, tracked in memory per browser tab
   (no login; a refresh lets someone vote again — fine for a party).
 - Votes are rejected once the countdown hits zero.

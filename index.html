@@ -91,6 +91,8 @@
   }
   .btn.primary:hover{background:linear-gradient(180deg, var(--gold-lt), var(--gold))}
   .btn.ghost{color:rgba(241,230,200,.7); border-color:rgba(241,230,200,.2); background:transparent}
+  .btn.ghost.arm{color:#ffb4b4; border-color:rgba(184,56,59,.8);
+    background:rgba(138,18,21,.28); box-shadow:0 0 24px rgba(138,18,21,.4)}
   .btn.big{min-width:min(300px,80vw); padding:1.3em 1.8em}
 
   .status{
@@ -432,7 +434,11 @@ const GUEST_LINK = location.origin + location.pathname;
 let state = { qIndex: 0, phase: "lobby", startsAt: 0 };  // lobby | voting | revealed | end
 let votes = {};                        // { [qIndex]: {a,b} }
 let connected = false;
-const myVotes = new Map();             // qIndex -> 'a'|'b'  (in-memory, per tab)
+/* Which questions this tab has voted on. Keyed by question AND the moment it
+   opened, so a restart (a fresh startsAt) lets everyone vote again without
+   asking guests to reload. In memory only — no login, no storage. */
+const myVotes = new Map();
+const voteKey = () => `${state.qIndex}@${state.startsAt}`;
 
 /* ---- QR code for the guest link (built once, it never changes) ------------ */
 let qrSvgCache = null;
@@ -463,16 +469,17 @@ const bgm = document.getElementById("bgm");
 bgm.src = MUSIC_URL;
 bgm.volume = 0.45;
 let musicPlaying = false, musicMissing = false;
-bgm.addEventListener("error",   () => { musicMissing = true; musicPlaying = false; render(); });
-bgm.addEventListener("canplay", () => { if (musicMissing) { musicMissing = false; render(); } });
-bgm.addEventListener("play",    () => { musicPlaying = true; musicMissing = false; render(); });
-bgm.addEventListener("pause",   () => { musicPlaying = false; render(); });
+bgm.addEventListener("error",   () => { musicMissing = true; musicPlaying = false; paintMusicButton(); });
+bgm.addEventListener("canplay", () => { musicMissing = false; paintMusicButton(); });
+bgm.addEventListener("play",    () => { musicPlaying = true; musicMissing = false; paintMusicButton(); });
+bgm.addEventListener("pause",   () => { musicPlaying = false; paintMusicButton(); });
 
 function toggleMusic() {
   if (musicPlaying) return bgm.pause();
   bgm.play().catch(() => { musicMissing = true; render(); });
 }
 
+let restartArmed = false, restartTimer = null;
 let clockSkew = 0;                     // ms difference between this device and Firebase
 const now = () => Date.now() + clockSkew;
 
@@ -593,23 +600,51 @@ const vials = () => {
     <p class="total">${total} vote${total === 1 ? "" : "s"} cast</p>`;
 };
 
-// Fixed furniture on the host screen: scan-to-join card and the music toggle.
-const qrCard = () => {
+/* Host furniture (scan-to-join card, music toggle) is built ONCE and lives
+   outside #app. It used to be re-rendered with everything else each second,
+   which meant a click could land on a button that had just been replaced —
+   that's why the music button felt like it ignored you. */
+let qrEl = null, musicEl = null;
+
+function buildHostChrome() {
+  if (role !== "host" || musicEl) return;
+
   const svg = guestQrSvg();
-  return svg ? `<aside class="qrcard">
-      <div class="qrframe">${svg}</div>
-      <span class="cap">Scan to join<br>the sorting</span>
-    </aside>` : "";
-};
+  if (svg) {
+    qrEl = document.createElement("aside");
+    qrEl.className = "qrcard";
+    qrEl.innerHTML = `<div class="qrframe">${svg}</div>
+      <span class="cap">Scan to join<br>the sorting</span>`;
+    document.body.appendChild(qrEl);
+  }
 
-const musicButton = () => `
-  <button class="musicbtn ${musicPlaying ? "playing" : ""} ${musicMissing ? "missing" : ""}"
-          data-act="music" title="${esc(MUSIC_URL)}">
-    <span class="note">${musicPlaying ? "♫" : "♪"}</span>
-    ${musicMissing ? "no music file" : musicPlaying ? "pause the music" : "play the music"}
+  musicEl = document.createElement("button");
+  musicEl.className = "musicbtn";
+  musicEl.title = MUSIC_URL;
+  musicEl.addEventListener("click", toggleMusic);   // direct handler, never re-created
+  document.body.appendChild(musicEl);
+  paintMusicButton();
+}
+
+function paintMusicButton() {
+  if (!musicEl) return;
+  musicEl.className = "musicbtn" + (musicPlaying ? " playing" : "") + (musicMissing ? " missing" : "");
+  musicEl.innerHTML = `<span class="note">${musicPlaying ? "♫" : "♪"}</span>
+    ${musicMissing ? "no music file" : musicPlaying ? "pause the music" : "play the music"}`;
+}
+
+// The QR is for people who still need to join; retire it on the closing screen.
+function paintHostChrome() {
+  if (qrEl) qrEl.style.display = state.phase === "end" ? "none" : "";
+  paintMusicButton();
+}
+
+// Wipes every vote and returns to the lobby. Needs two clicks — the second
+// one confirms, and it disarms itself after four seconds.
+const restartBtn = () => `
+  <button class="btn ghost ${restartArmed ? "arm" : ""}" data-act="restart">
+    ${restartArmed ? "↺ Tap again to wipe all votes" : "↺ Restart"}
   </button>`;
-
-const hostChrome = () => qrCard() + musicButton();
 
 const countdown = () => {
   const left = secsLeft();
@@ -626,8 +661,7 @@ const questionBlock = () => `
 
 function viewHost() {
   if (state.phase === "lobby") {
-    return `${hostChrome()}
-      ${header("The Great Hall is filling up. Hand out the link, then begin when everyone's settled.")}
+    return `${header("The Great Hall is filling up. Hand out the link, then begin when everyone's settled.")}
       <div class="center">
         <div class="controls"><button class="btn primary big" data-act="begin">Begin Voting</button></div>
         ${statusPill()}
@@ -639,8 +673,7 @@ function viewHost() {
       </div>`;
   }
   if (state.phase === "end") {
-    return `${musicButton()}
-      ${header("")}
+    return `${header("")}
       <div class="center">
         <h2 class="question">The votes are in.</h2>
         <p class="tagline">However ${esc(BABY_NAME)} is sorted, this lot will be cheering.
@@ -651,8 +684,7 @@ function viewHost() {
   const revealed = state.phase === "revealed";
   const last = state.qIndex === TOTAL - 1;
   const t = tally(state.qIndex), total = t.a + t.b;
-  return `${hostChrome()}
-  <div class="center">
+  return `<div class="center">
     ${questionBlock()}
     ${revealed ? vials() : `
       ${countdown()}
@@ -663,6 +695,7 @@ function viewHost() {
       ${revealed
         ? `<button class="btn primary" data-act="next">${last ? "Finish →" : "Next Question →"}</button>`
         : `<button class="btn primary" data-act="reveal">Reveal Results</button>`}
+      ${restartBtn()}
     </div>
     ${revealed ? "" : `<p class="footer-note">${total} vote${total === 1 ? "" : "s"} in so far (hidden from the room)</p>`}
   </div>`;
@@ -687,7 +720,7 @@ function viewGuest() {
           ${esc(BABY_NAME)} does.</p>
       </div>`;
   }
-  const mine = myVotes.get(state.qIndex);
+  const mine = myVotes.get(voteKey());
   if (state.phase === "revealed") {
     const Q = QUESTIONS[state.qIndex], t = tally(state.qIndex), total = t.a + t.b;
     return `<div class="center">
@@ -715,6 +748,7 @@ function viewGuest() {
 
 function render() {
   app.innerHTML = role === "host" ? viewHost() : viewGuest();
+  paintHostChrome();
 }
 
 /* ----------------------------------------------------------------------------
@@ -724,18 +758,28 @@ app.addEventListener("click", (e) => {
   const el = e.target.closest("[data-act],[data-vote]");
   if (!el) return;
 
-  if (el.dataset.act === "music")  return toggleMusic();
+  if (el.dataset.act === "restart") {
+    if (!restartArmed) {                    // one stray click shouldn't wipe the party
+      restartArmed = true; render();
+      clearTimeout(restartTimer);
+      restartTimer = setTimeout(() => { restartArmed = false; render(); }, 4000);
+      return;
+    }
+    clearTimeout(restartTimer);
+    restartArmed = false; autoRevealed = null; myVotes.clear();
+    return resetAll();
+  }
   if (el.dataset.act === "begin")  return setState({ qIndex: 0, phase: "voting", startsAt: now() });
-  if (el.dataset.act === "reveal") return setState({ qIndex: state.qIndex, phase: "revealed", startsAt: 0 });
+  if (el.dataset.act === "reveal") return setState({ qIndex: state.qIndex, phase: "revealed", startsAt: state.startsAt });
   if (el.dataset.act === "next")   return setState(
       state.qIndex >= TOTAL - 1 ? { qIndex: state.qIndex, phase: "end", startsAt: 0 }
                                 : { qIndex: state.qIndex + 1, phase: "voting", startsAt: now() });
-  if (el.dataset.act === "reset")  { myVotes.clear(); return resetAll(); }
+  if (el.dataset.act === "reset")  { autoRevealed = null; myVotes.clear(); return resetAll(); }
 
   if (el.dataset.vote) {
-    const choice = el.dataset.vote, i = state.qIndex;
-    if (state.phase !== "voting" || myVotes.has(i) || timeUp()) return;  // once, and only before time runs out
-    myVotes.set(i, choice);
+    const choice = el.dataset.vote, i = state.qIndex, key = voteKey();
+    if (state.phase !== "voting" || myVotes.has(key) || timeUp()) return;  // once, and only in time
+    myVotes.set(key, choice);
     render();                                                 // instant local feedback
     castVote(i, choice);
   }
@@ -745,17 +789,34 @@ app.addEventListener("click", (e) => {
    7) The clock. Re-renders only when the displayed second changes, and lets the
       host's screen (one writer, so no double-write) close voting at zero.
    -------------------------------------------------------------------------- */
+// Repaint just the countdown, in place. Returns false if the nodes aren't there.
+function paintTimer(left) {
+  const t = document.querySelector(".timer"), bar = document.querySelector(".timerbar span");
+  if (!t || !bar) return false;
+  t.textContent = left === 0 ? "time's up" : `${left}s left`;
+  t.className = "timer " + (left === 0 ? "done" : left <= 6 ? "urgent" : "");
+  bar.style.width = (left / QUESTION_SECONDS) * 100 + "%";
+  bar.className = left <= 6 ? "urgent" : "";
+  return true;
+}
+
 let shownSec = null, autoRevealed = null;
 setInterval(() => {
   const left = secsLeft();
   if (left === null) { shownSec = null; return; }
-  if (left !== shownSec) { shownSec = left; render(); }
+  if (left !== shownSec) {
+    shownSec = left;
+    // A full render only at zero (it has to disable the vote buttons); every
+    // other second just repaints the two countdown nodes.
+    if (left === 0 || !paintTimer(left)) render();
+  }
   if (left === 0 && role === "host" && autoRevealed !== state.qIndex) {
     autoRevealed = state.qIndex;      // the round-trip takes a moment; only write once
-    setState({ qIndex: state.qIndex, phase: "revealed", startsAt: 0 });
+    setState({ qIndex: state.qIndex, phase: "revealed", startsAt: state.startsAt });
   }
 }, 200);
 
+buildHostChrome();
 render();
 initSync();
 </script>
