@@ -59,11 +59,27 @@ Browsers block audio until someone interacts with the page. The host's click
 can't start on its own. Pausing keeps your place in the track; play resumes
 from there.
 
+## Language
+
+Guests get an **English / हिंदी** toggle in the top-right of their own screen.
+It swaps every guest-facing string — questions, options, timer, messages and
+the whole scoreboard — on that phone only. Nobody else's screen changes, and
+the host's big screen always stays English.
+
+The choice lives in memory, so a refresh returns to English. That's
+deliberate: nothing is written to anyone's phone.
+
+To add a language, add a key (say `ta:`) to every entry in `STRINGS` and to
+every question in `QUESTIONS`, then extend the toggle. Hindi styling relaxes
+the small-caps and letter-spacing automatically — Devanagari reads badly with
+wide tracking — via the `:root[lang="hi"]` rules.
+
 ## The final scoreboard
 
 When the host finishes the last question, both screens show the night's
 totals:
 
+- both parents' portraits either side of the split, the winner ringed in gold
 - the overall split — every vote across all 14 questions, as a percentage
 - how many questions each parent won, plus ties, and the total votes cast
 - the most one-sided question and the closest call

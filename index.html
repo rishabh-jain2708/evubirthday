@@ -23,7 +23,8 @@
   html,body{height:100%}
   body{
     margin:0;
-    font-family:Georgia,"Palatino Linotype",Palatino,"Book Antiqua",serif;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Book Antiqua",
+                "Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;
     color:var(--cream);
     background:
       radial-gradient(1200px 700px at 50% -10%, #1a1f4d 0%, transparent 60%),
@@ -279,10 +280,47 @@
     display:block; margin:.5em 0 .1em; color:var(--cream); word-break:break-all;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92rem;
   }
+  /* ---- language toggle (guest) ---- */
+  .langrow{display:flex; justify-content:flex-end; margin:0 0 .6em}
+  .langbtn{
+    display:inline-flex; align-items:center; gap:.45em;
+    border-radius:999px; border:1px solid var(--line); padding:.45em 1em;
+    background:linear-gradient(180deg, rgba(201,162,39,.16), rgba(0,0,0,.3));
+    color:var(--gold-lt); letter-spacing:.06em; font-size:.85rem;
+  }
+  .langbtn .globe{opacity:.8}
+  .langbtn:active{background:rgba(201,162,39,.3)}
+
+  /* ---- parent portraits on the closing screen ---- */
+  .faceoff{
+    display:flex; align-items:center; justify-content:center;
+    gap:clamp(12px,3vw,38px); margin:.2em auto 1em; flex-wrap:nowrap;
+  }
+  .por{margin:0; text-align:center; flex:0 0 auto}
+  .por img{
+    display:block; width:clamp(92px,15vw,168px); height:clamp(92px,15vw,168px);
+    object-fit:cover; border-radius:50%; border:3px solid var(--line);
+    box-shadow:0 10px 34px rgba(0,0,0,.5);
+  }
+  .por.a img{border-color:rgba(184,56,59,.85); box-shadow:0 0 34px rgba(184,56,59,.35)}
+  .por.b img{border-color:rgba(47,107,69,.9);  box-shadow:0 0 34px rgba(47,107,69,.35)}
+  .por.winner img{border-color:var(--gold-lt); box-shadow:0 0 44px rgba(232,198,90,.5)}
+  .por figcaption{
+    margin-top:.5em; font-variant:small-caps; letter-spacing:.12em;
+    color:var(--gold-lt); font-size:clamp(.78rem,1.6vw,1rem);
+  }
+  .por.nopic{display:none}      /* no photo yet — the split still reads fine alone */
+  .vs{flex:0 1 auto; min-width:0}
+  .vsnames{
+    text-align:center; margin:.1em 0 0; font-variant:small-caps; letter-spacing:.14em;
+    font-size:clamp(.8rem,1.8vw,1.05rem);
+  }
+  .vsnames .a{color:var(--gryff-1)} .vsnames .b{color:#57a86f}
+
   /* ---- final scoreboard ---- */
   .endwrap{padding-bottom:2em}
   .bigsplit{
-    text-align:center; margin:.1em 0 .5em; line-height:1.25;
+    text-align:center; margin:.1em 0 0; line-height:1.25; white-space:nowrap;
     font-size:clamp(1.6rem,5.5vw,3.2rem);
   }
   .bigsplit .a{color:var(--gryff-1)} .bigsplit .b{color:#57a86f}
@@ -329,6 +367,20 @@
   .brow .bnum.quiet{color:rgba(241,230,200,.35)}
   .tagline.closing{margin-top:1.8em}
 
+  /* Devanagari has no small-caps and reads badly with wide tracking, so the
+     gold label styling relaxes when the page is in Hindi. */
+  :root[lang="hi"] .eyebrow,
+  :root[lang="hi"] .qmeta,
+  :root[lang="hi"] .timer,
+  :root[lang="hi"] .opt .letter,
+  :root[lang="hi"] .vial-label .letter,
+  :root[lang="hi"] .sc .l,
+  :root[lang="hi"] .vsnames,
+  :root[lang="hi"] .por figcaption,
+  :root[lang="hi"] .linkbox .cap{letter-spacing:.02em; font-variant:normal}
+  :root[lang="hi"] .question{line-height:1.4}
+  :root[lang="hi"] .opt .letter{font-size:clamp(.95rem,2.2vw,1.25rem)}
+
   .rule{height:1px; background:linear-gradient(90deg,transparent,var(--line),transparent); margin:2em 0}
   .footer-note{text-align:center; color:rgba(241,230,200,.45); font-size:.8rem; margin-top:2.4em}
   .hidden{display:none !important}
@@ -336,6 +388,7 @@
   /* One column below the two-column threshold. auto-fit alone can leave a
      second column hanging off-screen on a phone, so pin it explicitly. */
   @media (max-width:780px){
+    .faceoff{gap:10px}
     .breakdown{grid-template-columns:1fr}
     .brow{grid-template-columns:1.4em minmax(0,1fr) 4.5em 3.2em; font-size:.82rem}
     .scoreboard{gap:8px}
@@ -388,29 +441,74 @@ const BABY_NAME = "Baby";           // swap in the actual name; used in copy bel
 
 /* The two sides. Option A is always PARENT_A's prediction, option B always
    PARENT_B's — that holds for every question, and the closing scoreboard
-   tallies the room across all of them. Swap the names and the whole app,
-   scoreboard included, follows. */
-const PARENT_A = "Anchit";
-const PARENT_B = "Gunjan";
+   tallies the room across all of them. Swap the names (both scripts) and the
+   whole app, scoreboard included, follows. */
+const PARENT_A = "Anchit",  PARENT_A_HI = "अंचित";
+const PARENT_B = "Gunjan",  PARENT_B_HI = "गुंजन";
 
-const PARTY_TAGLINE = "Fourteen questions. Two parents. One very small wizard. " +
-                      `Take ${PARENT_A}'s side or ${PARENT_B}'s — the Great Hall is taking votes.`;
+/* Portraits shown on the closing screen. Drop the two files in and they
+   appear; if either is missing the scoreboard simply renders without it. */
+const PARENT_A_PIC = "img/anchit.jpg";
+const PARENT_B_PIC = "img/gunjan.jpg";
 
+/* Each entry carries both languages. Add or remove entries freely — the
+   "of N" counter, the timer and the scoreboard all follow the array. */
 const QUESTIONS = [
-  { q: "Which House will Baby be sorted into?",                 a: "Gryffindor (brave & bold)", b: "Slytherin (cunning & sly)" },
-  { q: "Baby's first real word will sound closer to…",          a: "“Accio!”",        b: "“Mama!”" },
-  { q: "Baby's Patronus will be…",                              a: "A lion",                    b: "A stag" },
-  { q: "At the cake smash, Baby will attack the cake like…",    a: "A hungry Hippogriff",       b: "A starving Dementor" },
-  { q: "Baby will take their first steps…",                     a: "Before turning 2",          b: "Right in the middle of a party" },
-  { q: "Baby's favourite toy, forever and always, will be…",    a: "A wand",                    b: "A stuffed owl" },
-  { q: "Baby looks more like…",                                 a: PARENT_A,                    b: PARENT_B },
-  { q: "Baby will cry the loudest during…",                     a: "The cake cutting",          b: "The gift opening" },
-  { q: "Baby's future Quidditch position…",                     a: "Seeker",                    b: "Keeper" },
-  { q: "Baby's forever bedtime story will be…",                 a: "Harry Potter",              b: "Goodnight Moon" },
-  { q: "Baby's first attempted “spell” will sound like…", a: "“Accio bottle!”", b: "“Expecto snacko!”" },
-  { q: "Baby will nap straight through…",                       a: "The cake cutting",          b: "The gift opening" },
-  { q: "Baby's first pet (real or pretend) will be…",           a: "An owl",                    b: "A cat" },
-  { q: "Baby grows up loving…",                                 a: "Quidditch",                 b: "Potions class" },
+  { q:{en:"The Sorting Hat lands on Baby's head and shouts…",       hi:"सॉर्टिंग हैट बेबी के सिर पर आते ही चिल्लाएगा…"},
+    a:{en:"Gryffindor — brave, loud, fearless",                     hi:"ग्रिफ़िंडोर — बहादुर, बेधड़क, दिलवाला"},
+    b:{en:"Slytherin — clever, sneaky, gets their way",             hi:"स्लिदरिन — चालाक, चतुर, अपनी बात मनवाने वाला"} },
+
+  { q:{en:"Baby's first proper word will sound closer to…",         hi:"बेबी का पहला असली शब्द किससे मिलता-जुलता होगा?"},
+    a:{en:"“Accio!”",                                               hi:"“एक्सियो!”"},
+    b:{en:"“Mama!”",                                                hi:"“मामा!”"} },
+
+  { q:{en:"Baby's Patronus takes the shape of…",                    hi:"बेबी का पैट्रोनस किस रूप में आएगा?"},
+    a:{en:"A lion",                                                 hi:"एक शेर"},
+    b:{en:"A stag",                                                 hi:"एक हिरण"} },
+
+  { q:{en:"Cake smash strategy — Baby goes in like…",               hi:"केक स्मैश में बेबी केक पर टूट पड़ेगा, जैसे…"},
+    a:{en:"A hungry Hippogriff",                                    hi:"एक भूखा हिप्पोग्रिफ़"},
+    b:{en:"A starving Dementor",                                    hi:"एक भूखा डिमेंटर"} },
+
+  { q:{en:"Baby takes their first real steps…",                     hi:"बेबी अपने पहले असली कदम कब रखेगा?"},
+    a:{en:"Well before turning 2",                                  hi:"दो साल से पहले ही"},
+    b:{en:"Mid-party, with everyone filming",                       hi:"पार्टी के बीचों-बीच, जब सब कैमरा लिए खड़े हों"} },
+
+  { q:{en:"The one toy Baby refuses to sleep without…",             hi:"वो एक खिलौना, जिसके बिना बेबी सोएगा ही नहीं…"},
+    a:{en:"A wand",                                                 hi:"एक जादुई छड़ी"},
+    b:{en:"A stuffed owl",                                          hi:"एक उल्लू वाला सॉफ्ट टॉय"} },
+
+  { q:{en:"Look closely — Baby takes after…",                       hi:"ग़ौर से देखिए — बेबी की शक्ल किस पर गई है?"},
+    a:{en:PARENT_A,                                                 hi:PARENT_A_HI},
+    b:{en:PARENT_B,                                                 hi:PARENT_B_HI} },
+
+  { q:{en:"It's 3 a.m. Baby will only settle for…",                 hi:"रात के तीन बजे बेबी सिर्फ़ किसकी गोद में चुप होगा?"},
+    a:{en:PARENT_A,                                                 hi:PARENT_A_HI},
+    b:{en:PARENT_B,                                                 hi:PARENT_B_HI} },
+
+  { q:{en:"Baby's mischief is inherited from…",                     hi:"बेबी की शरारतें किससे विरासत में मिली हैं?"},
+    a:{en:PARENT_A,                                                 hi:PARENT_A_HI},
+    b:{en:PARENT_B,                                                 hi:PARENT_B_HI} },
+
+  { q:{en:"Baby's Quidditch position will be…",                     hi:"बेबी की क्विडिच पोज़िशन क्या होगी?"},
+    a:{en:"Seeker — first to spot the snacks",                      hi:"सीकर — स्नैक्स सबसे पहले ढूँढ लेगा"},
+    b:{en:"Keeper — guards the toys with their life",               hi:"कीपर — खिलौनों की जान से रखवाली करेगा"} },
+
+  { q:{en:"The bedtime story on repeat for the next five years…",   hi:"अगले पाँच साल तक हर रात यही कहानी चलेगी…"},
+    a:{en:"Harry Potter",                                           hi:"हैरी पॉटर"},
+    b:{en:"Goodnight Moon",                                         hi:"गुडनाइट मून"} },
+
+  { q:{en:"Baby's first attempted “spell” will sound like…",        hi:"बेबी का पहला “जादू” कुछ ऐसा सुनाई देगा…"},
+    a:{en:"“Accio bottle!”",                                        hi:"“एक्सियो बोतल!”"},
+    b:{en:"“Expecto snacko!”",                                      hi:"“एक्सपेक्टो स्नैको!”"} },
+
+  { q:{en:"Baby will sleep straight through…",                      hi:"बेबी पूरी नींद में सोता रहेगा…"},
+    a:{en:"The cake cutting",                                       hi:"केक कटने के दौरान"},
+    b:{en:"The gift opening",                                       hi:"गिफ़्ट खुलने के दौरान"} },
+
+  { q:{en:"Twenty years on, Baby tops the class in…",               hi:"बीस साल बाद बेबी सबसे आगे होगा…"},
+    a:{en:"Quidditch",                                              hi:"क्विडिच में"},
+    b:{en:"Potions",                                                hi:"पोशन्स क्लास में"} },
 ];
 
 /* ----------------------------------------------------------------------------
@@ -465,6 +563,68 @@ const firebaseConfig = {
 };
 
 const ROOT = "sortingvote";  // change to run two parties off one Firebase project
+
+/* ----------------------------------------------------------------------------
+   1b) LANGUAGE — guests get an English / हिंदी toggle. The host screen stays
+       English (it's the shared big screen). Add a language by adding a key
+       to every entry below and to each question above.
+   -------------------------------------------------------------------------- */
+const STRINGS = {
+  en: {
+    langName:"हिंदी",         eyebrow:"✨ A Magical First Birthday ✨",
+    tagline:`Fourteen questions. Two parents. One very small wizard. Take ${PARENT_A}'s side or ${PARENT_B}'s — the Great Hall is taking votes.`,
+    waitTitle:"Wand at the ready.",
+    waitBody:(secs)=>`The host hasn't opened the first question yet. Keep this page open — it'll jump to the vote by itself. Each question stays open for ${secs} seconds, so keep your thumb ready.`,
+    qOf:(i,n)=>`Question ${i} of ${n}`,
+    says:"says",              secsLeft:(n)=>`${n}s left`,          timesUp:"time's up",
+    tapFast:"Tap fast. One vote per question — choose wisely.",
+    voteIn:"Vote received. Sit tight for the reveal…",
+    tooLate:"Time's up — this one closed before you tapped. Next question shortly…",
+    votesCast:(n)=>`${n} vote${n===1?"":"s"} cast`,
+    youPicked:(side,txt)=>`You picked ${side} — ${txt}.`,
+    satOut:"You sat this one out.",
+    thanks:"Thanks for voting ✨",
+    cake:(baby)=>`Now go get cake before ${baby} does.`,
+    finalTally:"the final tally",
+    verdict:(who,won,of)=>`The Great Hall sides with <strong>${who}</strong> — ${won} of ${of} question${of===1?"":"s"}.`,
+    deadHeat:(a,b)=>`A dead heat. ${a} and ${b} split the room down the middle.`,
+    questionsTo:(who)=>`questions to ${who}`,
+    tied:"tied",              votesAll:"votes cast in all",
+    noVotes:"no votes",       nothing:"No votes were cast — nothing to count.",
+    widest:(q,gap)=>`Most one-sided: <em>${q}</em> (${gap}-point gap).`,
+    closest:(q,gap)=>gap===0?`Closest call: <em>${q}</em> — a perfect tie.`:`Closest call: <em>${q}</em> (${gap} points).`,
+    yoursSplit:(n)=>`You split your ${n} vote${n===1?"":"s"} evenly between them. Diplomatic.`,
+    yoursSide:(who,n,of)=>`You sided with <strong>${who}</strong> on ${n} of your ${of} vote${of===1?"":"s"}.`,
+    yoursNone:"You didn't get a vote in — next time.",
+  },
+  hi: {
+    langName:"English",       eyebrow:"✨ एक जादुई पहला जन्मदिन ✨",
+    tagline:`चौदह सवाल। दो पैरेंट्स। और एक नन्हा जादूगर। ${PARENT_A_HI} का साथ दीजिए या ${PARENT_B_HI} का — ग्रेट हॉल में वोटिंग शुरू है।`,
+    waitTitle:"छड़ी तैयार रखिए।",
+    waitBody:(secs)=>`होस्ट ने अभी पहला सवाल खोला नहीं है। यह पेज खुला रहने दीजिए — सवाल आते ही यह अपने आप बदल जाएगा। हर सवाल सिर्फ़ ${secs} सेकंड के लिए खुलेगा, इसलिए उँगली तैयार रखिए।`,
+    qOf:(i,n)=>`सवाल ${i} / ${n}`,
+    says:"का कहना है",         secsLeft:(n)=>`${n} सेकंड बाक़ी`,    timesUp:"समय ख़त्म",
+    tapFast:"जल्दी चुनिए। हर सवाल में सिर्फ़ एक वोट — सोच-समझकर।",
+    voteIn:"वोट मिल गया। अब नतीजे का इंतज़ार कीजिए…",
+    tooLate:"समय ख़त्म — इस बार वोट नहीं गिना गया। अगला सवाल बस आने ही वाला है…",
+    votesCast:(n)=>`कुल ${n} वोट`,
+    youPicked:(side,txt)=>`आपने ${side} चुना — ${txt}।`,
+    satOut:"इस बार आपने वोट नहीं दिया।",
+    thanks:"वोट देने के लिए शुक्रिया ✨",
+    cake:(baby)=>`अब जल्दी से केक लीजिए, इससे पहले कि ${baby} सब चट कर जाए।`,
+    finalTally:"आख़िरी नतीजा",
+    verdict:(who,won,of)=>`ग्रेट हॉल का फ़ैसला — <strong>${who}</strong>, ${of} में से ${won} सवालों में।`,
+    deadHeat:(a,b)=>`पूरी बराबरी! ${a} और ${b} ने महफ़िल आधी-आधी बाँट ली।`,
+    questionsTo:(who)=>`सवाल ${who} के नाम`,
+    tied:"बराबरी",            votesAll:"कुल वोट",
+    noVotes:"कोई वोट नहीं",    nothing:"एक भी वोट नहीं पड़ा — गिनने को कुछ है ही नहीं।",
+    widest:(q,gap)=>`सबसे एकतरफ़ा: <em>${q}</em> (${gap} अंकों का फ़ासला)।`,
+    closest:(q,gap)=>gap===0?`सबसे कड़ा मुक़ाबला: <em>${q}</em> — पूरी बराबरी।`:`सबसे कड़ा मुक़ाबला: <em>${q}</em> (${gap} अंक)।`,
+    yoursSplit:(n)=>`आपने अपने ${n} वोट दोनों में बराबर बाँट दिए। बड़ी समझदारी!`,
+    yoursSide:(who,n,of)=>`आपने अपने ${of} में से ${n} वोट <strong>${who}</strong> को दिए।`,
+    yoursNone:"आप इस बार वोट नहीं डाल पाए — अगली बार सही।",
+  },
+};
 
 /* ----------------------------------------------------------------------------
    2b) TWO LINKS — the host link carries a key in the query string; every other
@@ -561,7 +721,16 @@ const app = document.getElementById("app");
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 // Firebase omits keys that have no value, so a question with only A-votes
 // comes back as { a: 1 } — normalise both sides to numbers.
-const SIDE = { a: PARENT_A, b: PARENT_B };
+/* Guests can switch language; the host screen stays English. Held in memory,
+   so a refresh returns to English — deliberate, nothing is stored on anyone's
+   phone. */
+let lang = "en";
+const T = () => STRINGS[lang];
+const NAME = (k) => lang === "hi" ? (k === "a" ? PARENT_A_HI : PARENT_B_HI)
+                                  : (k === "a" ? PARENT_A    : PARENT_B);
+const Q = (i) => QUESTIONS[i];                 // question text in the current language
+const qt = (i) => Q(i).q[lang];
+const ot = (i, k) => Q(i)[k][lang];
 const tally = (i) => { const t = votes[i] || {}; return { a: t.a || 0, b: t.b || 0 }; };
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
 
@@ -623,7 +792,7 @@ async function initSync() {
    5) Views
    -------------------------------------------------------------------------- */
 const header = (sub) => `
-  <p class="eyebrow">✨ A Magical First Birthday ✨</p>
+  <p class="eyebrow">${T().eyebrow}</p>
   <h1>The Sorting Vote</h1>
   ${sub ? `<p class="tagline">${sub}</p>` : ""}`;
 
@@ -635,20 +804,20 @@ const statusPill = () => `
   </div>`;
 
 const optionCards = ({ disabled, chosen, asButtons }) => {
-  const Q = QUESTIONS[state.qIndex];
   const one = (k) => {
     const tag = asButtons ? "button" : "div";
     const attrs = asButtons ? ` data-vote="${k}"${disabled ? " disabled" : ""}` : "";
+    const text = ot(state.qIndex, k), isName = text === NAME(k);
     return `<${tag} class="opt ${k}${chosen === k ? " chosen" : ""}"${attrs}>
-      <span class="letter">${k.toUpperCase()} · ${esc(SIDE[k])} says</span>
-      <span class="label">${esc(Q[k])}</span>
+      <span class="letter">${k.toUpperCase()}${isName ? "" : ` · ${esc(NAME(k))} ${esc(T().says)}`}</span>
+      <span class="label">${esc(text)}</span>
     </${tag}>`;
   };
   return `<div class="options">${one("a")}${one("b")}</div>`;
 };
 
 const vials = () => {
-  const Q = QUESTIONS[state.qIndex], t = tally(state.qIndex), total = t.a + t.b;
+  const t = tally(state.qIndex), total = t.a + t.b;
   const col = (k) => `
     <div class="vial-col">
       <div class="vial">
@@ -658,13 +827,13 @@ const vials = () => {
         <div class="vial-pct">${pct(t[k], total)}%</div>
       </div>
       <div class="vial-label">
-        <span class="letter">${k.toUpperCase()} · ${esc(SIDE[k])}</span>
-        <span class="txt">${esc(Q[k])}</span>
+        <span class="letter">${k.toUpperCase()} · ${esc(NAME(k))}</span>
+        <span class="txt">${esc(ot(state.qIndex, k))}</span>
         <span class="count">${t[k]} vote${t[k] === 1 ? "" : "s"}</span>
       </div>
     </div>`;
   return `<div class="vials">${col("a")}${col("b")}</div>
-    <p class="total">${total} vote${total === 1 ? "" : "s"} cast</p>`;
+    <p class="total">${T().votesCast(total)}</p>`;
 };
 
 /* Host furniture (scan-to-join card, music toggle) is built ONCE and lives
@@ -713,12 +882,29 @@ const restartBtn = () => `
     ${restartArmed ? "↺ Tap again to wipe all votes" : "↺ Restart"}
   </button>`;
 
+// Guest-only. One tap swaps every string on this phone; nobody else's screen
+// changes, and nothing is stored.
+const langToggle = () => role === "host" ? "" : `
+  <div class="langrow">
+    <button class="langbtn" data-act="lang">
+      <span class="globe">⌘</span>${T().langName}
+    </button>
+  </div>`;
+
+// Closing-screen portrait. Skips itself cleanly if the image file isn't there.
+const portrait = (k, winner) => `
+  <figure class="por ${k}${winner ? " winner" : ""}">
+    <img src="${k === "a" ? PARENT_A_PIC : PARENT_B_PIC}" alt="${esc(NAME(k))}"
+         onerror="this.closest('.por').classList.add('nopic')">
+    <figcaption>${esc(NAME(k))}${winner ? ` <span class="crown">👑</span>` : ""}</figcaption>
+  </figure>`;
+
 const countdown = () => {
   const left = secsLeft();
   if (left === null) return "";
   const cls = left === 0 ? "done" : left <= 6 ? "urgent" : "";
   const pctLeft = (left / QUESTION_SECONDS) * 100;
-  return `<div class="timer ${cls}">${left === 0 ? "time's up" : `${left}s left`}</div>
+  return `<div class="timer ${cls}">${left === 0 ? T().timesUp : T().secsLeft(left)}</div>
     <div class="timerbar"><span class="${left <= 6 ? "urgent" : ""}" style="width:${pctLeft}%"></span></div>`;
 };
 
@@ -726,14 +912,14 @@ const countdown = () => {
 // Everything the closing screen needs, computed from the vote tallies.
 function overall() {
   let a = 0, b = 0, wonA = 0, wonB = 0, tied = 0, answered = 0;
-  const rows = QUESTIONS.map((Q, i) => {
+  const rows = QUESTIONS.map((_, i) => {
     const t = tally(i), tot = t.a + t.b;
     a += t.a; b += t.b;
     if (tot) {
       answered++;
       if (t.a > t.b) wonA++; else if (t.b > t.a) wonB++; else tied++;
     }
-    return { i, q: Q.q, t, tot, lead: tot ? Math.abs(pct(t.a, tot) - pct(t.b, tot)) : null };
+    return { i, q: qt(i), t, tot, lead: tot ? Math.abs(pct(t.a, tot) - pct(t.b, tot)) : null };
   });
   const scored = rows.filter(r => r.tot);
   const byLead = [...scored].sort((x, y) => x.lead - y.lead);
@@ -750,13 +936,13 @@ function myTake() {
 
 function scoreboard() {
   const o = overall();
-  if (!o.total) return `<p class="tagline">No votes were cast — nothing to count.</p>`;
+  if (!o.total) return `<p class="tagline">${T().nothing}</p>`;
 
   const pa = pct(o.a, o.total), pb = pct(o.b, o.total);
   const verdict = o.wonA === o.wonB
-    ? `A dead heat. ${esc(PARENT_A)} and ${esc(PARENT_B)} split the room down the middle.`
-    : `The Great Hall sides with <strong>${esc(o.wonA > o.wonB ? PARENT_A : PARENT_B)}</strong>
-       — ${Math.max(o.wonA, o.wonB)} of ${o.answered} question${o.answered === 1 ? "" : "s"}.`;
+    ? T().deadHeat(esc(NAME("a")), esc(NAME("b")))
+    : T().verdict(esc(NAME(o.wonA > o.wonB ? "a" : "b")), Math.max(o.wonA, o.wonB), o.answered);
+  const won = o.wonA === o.wonB ? null : (o.wonA > o.wonB ? "a" : "b");
 
   const rows = o.rows.map(r => `
     <div class="brow">
@@ -765,36 +951,41 @@ function scoreboard() {
       ${r.tot ? `
         <span class="bbar"><i class="ba" style="width:${pct(r.t.a, r.tot)}%"></i><i class="bb" style="width:${pct(r.t.b, r.tot)}%"></i></span>
         <span class="bnum">${pct(r.t.a, r.tot)}–${pct(r.t.b, r.tot)}</span>`
-      : `<span class="bbar empty"></span><span class="bnum quiet">no votes</span>`}
+      : `<span class="bbar empty"></span><span class="bnum quiet">${T().noVotes}</span>`}
     </div>`).join("");
 
   return `
-    <p class="eyebrow">the final tally</p>
-    <p class="bigsplit">
-      <span class="a">${esc(PARENT_A)} ${pa}%</span>
-      <span class="dash">—</span>
-      <span class="b">${pb}% ${esc(PARENT_B)}</span>
-    </p>
+    <p class="eyebrow">${T().finalTally}</p>
+    <div class="faceoff">
+      ${portrait("a", won === "a")}
+      <div class="vs">
+        <p class="bigsplit">
+          <span class="a">${pa}%</span><span class="dash">—</span><span class="b">${pb}%</span>
+        </p>
+        <p class="vsnames"><span class="a">${esc(NAME("a"))}</span> · <span class="b">${esc(NAME("b"))}</span></p>
+      </div>
+      ${portrait("b", won === "b")}
+    </div>
     <p class="verdict">${verdict}</p>
 
     <div class="scoreboard">
-      <div class="sc a"><span class="n">${o.wonA}</span><span class="l">questions to ${esc(PARENT_A)}</span></div>
-      ${o.tied ? `<div class="sc t"><span class="n">${o.tied}</span><span class="l">tied</span></div>` : ""}
-      <div class="sc b"><span class="n">${o.wonB}</span><span class="l">questions to ${esc(PARENT_B)}</span></div>
-      <div class="sc"><span class="n">${o.total}</span><span class="l">votes cast in all</span></div>
+      <div class="sc a"><span class="n">${o.wonA}</span><span class="l">${T().questionsTo(esc(NAME("a")))}</span></div>
+      ${o.tied ? `<div class="sc t"><span class="n">${o.tied}</span><span class="l">${T().tied}</span></div>` : ""}
+      <div class="sc b"><span class="n">${o.wonB}</span><span class="l">${T().questionsTo(esc(NAME("b")))}</span></div>
+      <div class="sc"><span class="n">${o.total}</span><span class="l">${T().votesAll}</span></div>
     </div>
 
     ${o.widest && o.widest.lead > 0 ? `<p class="footnote">
-      Most one-sided: <em>${esc(o.widest.q)}</em> (${o.widest.lead}-point gap).
-      ${o.closest && o.closest !== o.widest ? `Closest call: <em>${esc(o.closest.q)}</em>${o.closest.lead === 0 ? " — a perfect tie" : ` (${o.closest.lead} points)`}.` : ""}
+      ${T().widest(esc(o.widest.q), o.widest.lead)}
+      ${o.closest && o.closest !== o.widest ? T().closest(esc(o.closest.q), o.closest.lead) : ""}
     </p>` : ""}
 
     <div class="breakdown">${rows}</div>`;
 }
 
 const questionBlock = () => `
-  <p class="qmeta">Question ${state.qIndex + 1} of ${TOTAL}</p>
-  <h2 class="question">${esc(QUESTIONS[state.qIndex].q)}</h2>`;
+  <p class="qmeta">${T().qOf(state.qIndex + 1, TOTAL)}</p>
+  <h2 class="question">${esc(qt(state.qIndex))}</h2>`;
 
 function viewHost() {
   if (state.phase === "lobby") {
@@ -842,57 +1033,51 @@ function viewHost() {
 
 function viewGuest() {
   if (state.phase === "lobby") {
-    return `${header(PARTY_TAGLINE)}
+    return `${langToggle()}
+      ${header(T().tagline)}
       <div class="center">
-        <h2 class="question">Wand at the ready.</h2>
-        <p class="tagline">The host hasn't opened the first question yet. Keep this page open —
-          it'll jump to the vote by itself. Each question stays open for
-          ${QUESTION_SECONDS} seconds, so keep your thumb ready.</p>
+        <h2 class="question">${T().waitTitle}</h2>
+        <p class="tagline">${T().waitBody(QUESTION_SECONDS)}</p>
         ${statusPill()}
       </div>`;
   }
   if (state.phase === "end") {
     const m = myTake();
     const yours = m.total
-      ? (m.a === m.b
-          ? `You split your ${m.total} vote${m.total === 1 ? "" : "s"} evenly between them. Diplomatic.`
-          : `You sided with <strong>${esc(m.a > m.b ? PARENT_A : PARENT_B)}</strong>
-             on ${Math.max(m.a, m.b)} of your ${m.total} vote${m.total === 1 ? "" : "s"}.`)
-      : "You didn't get a vote in — next time.";
-    return `<div class="center endwrap">
-        <h2 class="question">Thanks for voting ✨</h2>
+      ? (m.a === m.b ? T().yoursSplit(m.total)
+                     : T().yoursSide(esc(NAME(m.a > m.b ? "a" : "b")), Math.max(m.a, m.b), m.total))
+      : T().yoursNone;
+    return `${langToggle()}<div class="center endwrap">
+        <h2 class="question">${T().thanks}</h2>
         <p class="verdict">${yours}</p>
         ${scoreboard()}
-        <p class="tagline closing">Now go get cake before ${esc(BABY_NAME)} does.</p>
+        <p class="tagline closing">${T().cake(esc(BABY_NAME))}</p>
       </div>`;
   }
   const mine = myVotes.get(voteKey());
   if (state.phase === "revealed") {
-    const Q = QUESTIONS[state.qIndex], t = tally(state.qIndex), total = t.a + t.b;
-    return `<div class="center">
+    const t = tally(state.qIndex), total = t.a + t.b;
+    return `${langToggle()}<div class="center">
       ${questionBlock()}
       <p class="split">
-        <span class="a">${esc(PARENT_A)} ${pct(t.a, total)}%</span><span class="dash">—</span><span class="b">${pct(t.b, total)}% ${esc(PARENT_B)}</span>
+        <span class="a">${esc(NAME("a"))} ${pct(t.a, total)}%</span><span class="dash">—</span><span class="b">${pct(t.b, total)}% ${esc(NAME("b"))}</span>
       </p>
-      <p class="total">${total} vote${total === 1 ? "" : "s"} cast</p>
+      <p class="total">${T().votesCast(total)}</p>
       ${optionCards({ asButtons: false, chosen: mine })}
-      <p class="guest-msg">${mine ? `You picked ${mine.toUpperCase()} — ${esc(Q[mine])}.` : "You sat this one out."}</p>
+      <p class="guest-msg">${mine ? T().youPicked(mine.toUpperCase(), esc(ot(state.qIndex, mine))) : T().satOut}</p>
     </div>`;
   }
   const closed = timeUp();
-  return `<div class="center">
+  return `${langToggle()}<div class="center">
     ${questionBlock()}
     ${countdown()}
     ${optionCards({ asButtons: true, disabled: !!mine || closed, chosen: mine })}
-    <p class="guest-msg">${mine
-      ? "Vote received. Sit tight for the reveal…"
-      : closed
-        ? "Time's up — this one closed before you tapped. Next question shortly…"
-        : "Tap fast. One vote per question — choose wisely."}</p>
+    <p class="guest-msg">${mine ? T().voteIn : closed ? T().tooLate : T().tapFast}</p>
   </div>`;
 }
 
 function render() {
+  document.documentElement.lang = role === "host" ? "en" : lang;
   app.innerHTML = role === "host" ? viewHost() : viewGuest();
   paintHostChrome();
 }
@@ -904,6 +1089,7 @@ app.addEventListener("click", (e) => {
   const el = e.target.closest("[data-act],[data-vote]");
   if (!el) return;
 
+  if (el.dataset.act === "lang")   { lang = lang === "en" ? "hi" : "en"; return render(); }
   if (el.dataset.act === "restart") {
     if (!restartArmed) {                    // one stray click shouldn't wipe the party
       restartArmed = true; render();
@@ -939,7 +1125,7 @@ app.addEventListener("click", (e) => {
 function paintTimer(left) {
   const t = document.querySelector(".timer"), bar = document.querySelector(".timerbar span");
   if (!t || !bar) return false;
-  t.textContent = left === 0 ? "time's up" : `${left}s left`;
+  t.textContent = left === 0 ? T().timesUp : T().secsLeft(left);
   t.className = "timer " + (left === 0 ? "done" : left <= 6 ? "urgent" : "");
   bar.style.width = (left / QUESTION_SECONDS) * 100 + "%";
   bar.className = left <= 6 ? "urgent" : "";
