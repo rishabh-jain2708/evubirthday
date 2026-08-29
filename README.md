@@ -44,10 +44,9 @@ The host screen has a ♪ play/pause button, top-right. It plays
 attached to speakers, and thirty phones playing the same track slightly out
 of sync would be a mess.
 
-**No audio file is committed.** A Hedwig's Theme recording is copyrighted and
-not mine to distribute, so drop in a copy you're entitled to use — see
-`music/README.md`. Until you do, the button says "no music file" and does
-nothing; it starts working the moment the file is there, no code change.
+The track lives at `music/theme.mp3`. Swap that file to change the music.
+Note it's a copyrighted recording being served publicly by GitHub Pages —
+fine in practice for a family party, worth knowing if the repo stays up.
 
 Browsers block audio until someone interacts with the page. The host's click
 *is* that interaction, so it just works — but the host has to click it; it
