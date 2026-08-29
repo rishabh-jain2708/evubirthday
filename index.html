@@ -208,6 +208,38 @@
     text-align:center; font-size:clamp(1.3rem,5vw,2rem); margin:.2em 0 .1em; letter-spacing:.02em;
   }
   .split .a{color:var(--gryff-1)} .split .b{color:#57a86f} .split .dash{color:var(--gold); margin:0 .4em}
+  /* ---- countdown ---- */
+  .timer{
+    display:block; width:max-content; margin:0 auto 1.1em; text-align:center;
+    font-variant:small-caps; letter-spacing:.18em; color:var(--gold-lt);
+    border:1px solid var(--line); border-radius:999px; padding:.3em 1.1em;
+    background:rgba(0,0,0,.25); font-size:clamp(.9rem,2.2vw,1.15rem);
+  }
+  .timer.urgent{color:#ff8f8f; border-color:rgba(184,56,59,.7);
+    background:rgba(138,18,21,.25); animation:tick 1s steps(2,end) infinite}
+  .timer.done{color:rgba(241,230,200,.55); border-color:rgba(241,230,200,.18);
+    background:transparent; animation:none}
+  @keyframes tick{0%,100%{opacity:1}50%{opacity:.55}}
+  .timerbar{
+    width:min(560px,90%); height:4px; margin:0 auto 1.6em; border-radius:999px;
+    background:rgba(241,230,200,.12); overflow:hidden;
+  }
+  .timerbar span{
+    display:block; height:100%; border-radius:999px;
+    background:linear-gradient(90deg, var(--gold), var(--gold-lt));
+    transition:width 1s linear;
+  }
+  .timerbar span.urgent{background:linear-gradient(90deg, var(--gryff-0), var(--gryff-1))}
+  .linkbox{
+    margin:1.6em auto 0; max-width:34em; text-align:center;
+    border:1px solid var(--line); border-radius:14px; padding:1em 1.2em;
+    background:rgba(0,0,0,.22);
+  }
+  .linkbox .cap{font-variant:small-caps; letter-spacing:.18em; color:var(--gold); font-size:.8rem}
+  .linkbox code{
+    display:block; margin:.5em 0 .1em; color:var(--cream); word-break:break-all;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92rem;
+  }
   .rule{height:1px; background:linear-gradient(90deg,transparent,var(--line),transparent); margin:2em 0}
   .footer-note{text-align:center; color:rgba(241,230,200,.45); font-size:.8rem; margin-top:2.4em}
   .hidden{display:none !important}
@@ -218,6 +250,8 @@
   }
   @media (prefers-reduced-motion:reduce){
     .fill{transition:none}
+    .timerbar span{transition:none}
+    .timer.urgent{animation:none}
     .live-note .pulse{animation:none; opacity:1}
     .btn,.opt{transition:none}
   }
@@ -310,14 +344,45 @@ const firebaseConfig = {
 const ROOT = "sortingvote";  // change to run two parties off one Firebase project
 
 /* ----------------------------------------------------------------------------
+   2b) TWO LINKS — the host link carries a key in the query string; every other
+       visitor is a guest. Change HOST_KEY to whatever you like (no spaces).
+
+         Guest link :  https://<user>.github.io/<repo>/
+         Host link  :  https://<user>.github.io/<repo>/?host=greathall
+
+       This stops a guest wandering into the host controls by accident. It is
+       not a security boundary — the key is visible to anyone who reads the
+       page source. For a birthday party that's the right trade-off.
+   -------------------------------------------------------------------------- */
+const HOST_KEY = "greathall";
+
+// Seconds each question stays open. Voting locks when it hits zero and the
+// host screen reveals automatically; the host can still reveal early.
+const QUESTION_SECONDS = 20;
+
+/* ----------------------------------------------------------------------------
    3) Local (non-shared) state
    -------------------------------------------------------------------------- */
 const TOTAL = QUESTIONS.length;
-let role = null;                       // 'host' | 'guest'
-let state = { qIndex: 0, phase: "lobby" };   // lobby | voting | revealed | end
+// Role is decided by the URL, once, and never changes at runtime.
+const role = new URLSearchParams(location.search).get("host") === HOST_KEY ? "host" : "guest";
+const GUEST_LINK = location.origin + location.pathname;
+
+let state = { qIndex: 0, phase: "lobby", startsAt: 0 };  // lobby | voting | revealed | end
 let votes = {};                        // { [qIndex]: {a,b} }
 let connected = false;
 const myVotes = new Map();             // qIndex -> 'a'|'b'  (in-memory, per tab)
+
+let clockSkew = 0;                     // ms difference between this device and Firebase
+const now = () => Date.now() + clockSkew;
+
+// Seconds remaining on the current question, or null when there's no countdown
+// running (older state with no startsAt, or a phase other than voting).
+function secsLeft() {
+  if (state.phase !== "voting" || !state.startsAt) return null;
+  return Math.max(0, Math.ceil((state.startsAt + QUESTION_SECONDS * 1000 - now()) / 1000));
+}
+const timeUp = () => secsLeft() === 0;
 
 const app = document.getElementById("app");
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
@@ -349,10 +414,14 @@ async function initSync() {
     const votesRef = ref(db, ROOT + "/votes");
 
     onValue(ref(db, ".info/connected"), (snap) => { connected = snap.val() === true; render(); });
+    // Every device counts down against Firebase's clock, not its own, so the
+    // timer reads the same on the big screen and on a phone with a lazy clock.
+    onValue(ref(db, ".info/serverTimeOffset"), (snap) => { clockSkew = snap.val() || 0; render(); });
     onValue(stateRef, (snap) => {
       const v = snap.val();
-      state = v && typeof v.qIndex === "number" ? { qIndex: v.qIndex, phase: v.phase || "lobby" }
-                                                : { qIndex: 0, phase: "lobby" };
+      state = v && typeof v.qIndex === "number"
+        ? { qIndex: v.qIndex, phase: v.phase || "lobby", startsAt: v.startsAt || 0 }
+        : { qIndex: 0, phase: "lobby", startsAt: 0 };
       render();
     });
     onValue(votesRef, (snap) => { votes = snap.val() || {}; render(); });
@@ -361,7 +430,7 @@ async function initSync() {
     // Atomic increment so simultaneous taps can't clobber each other.
     castVote = (qIndex, choice) =>
       runTransaction(ref(db, `${ROOT}/votes/${qIndex}/${choice}`), (n) => (n || 0) + 1);
-    resetAll = async () => { await remove(votesRef); await set(stateRef, { qIndex: 0, phase: "lobby" }); };
+    resetAll = async () => { await remove(votesRef); await set(stateRef, { qIndex: 0, phase: "lobby", startsAt: 0 }); };
 
   } else {
     // DEMO MODE: single device only. Lets you rehearse before Firebase is wired up.
@@ -371,7 +440,7 @@ async function initSync() {
       const t = { ...tally(qIndex) }; t[choice] = (t[choice] || 0) + 1;
       votes = { ...votes, [qIndex]: t }; render();
     };
-    resetAll  = () => { votes = {}; state = { qIndex: 0, phase: "lobby" }; render(); };
+    resetAll  = () => { votes = {}; state = { qIndex: 0, phase: "lobby", startsAt: 0 }; render(); };
   }
   render();
 }
@@ -424,21 +493,18 @@ const vials = () => {
     <p class="total">${total} vote${total === 1 ? "" : "s"} cast</p>`;
 };
 
+const countdown = () => {
+  const left = secsLeft();
+  if (left === null) return "";
+  const cls = left === 0 ? "done" : left <= 6 ? "urgent" : "";
+  const pctLeft = (left / QUESTION_SECONDS) * 100;
+  return `<div class="timer ${cls}">${left === 0 ? "time's up" : `${left}s left`}</div>
+    <div class="timerbar"><span class="${left <= 6 ? "urgent" : ""}" style="width:${pctLeft}%"></span></div>`;
+};
+
 const questionBlock = () => `
   <p class="qmeta">Question ${state.qIndex + 1} of ${TOTAL}</p>
   <h2 class="question">${esc(QUESTIONS[state.qIndex].q)}</h2>`;
-
-function viewLanding() {
-  return `${header(PARTY_TAGLINE)}
-    <div class="center">
-      <div class="roles">
-        <button class="btn primary big" data-role="host">I'm the Host (big screen)</button>
-        <button class="btn big" data-role="guest">I'm a Guest (vote here)</button>
-      </div>
-      ${statusPill()}
-      <p class="footer-note">Same link for everyone — pick your role above.</p>
-    </div>`;
-}
 
 function viewHost() {
   if (state.phase === "lobby") {
@@ -446,7 +512,11 @@ function viewHost() {
       <div class="center">
         <div class="controls"><button class="btn primary big" data-act="begin">Begin Voting</button></div>
         ${statusPill()}
-        <p class="footer-note">${TOTAL} questions · guests vote from their own phones</p>
+        <div class="linkbox">
+          <span class="cap">guests open this link</span>
+          <code>${esc(GUEST_LINK)}</code>
+        </div>
+        <p class="footer-note">${TOTAL} questions · ${QUESTION_SECONDS} seconds each · guests vote from their own phones</p>
       </div>`;
   }
   if (state.phase === "end") {
@@ -464,7 +534,8 @@ function viewHost() {
   return `<div class="center">
     ${questionBlock()}
     ${revealed ? vials() : `
-      <p class="live-note"><span class="pulse">✦ Votes are arriving…</span></p>
+      ${countdown()}
+      <p class="live-note"><span class="pulse">${timeUp() ? "✦ Voting closed — revealing…" : "✦ Votes are arriving…"}</span></p>
       ${optionCards({ asButtons: false })}
       <p class="live-note" style="margin-top:1.4em">Results sealed until the reveal.</p>`}
     <div class="controls">
@@ -478,11 +549,12 @@ function viewHost() {
 
 function viewGuest() {
   if (state.phase === "lobby") {
-    return `${header("")}
+    return `${header(PARTY_TAGLINE)}
       <div class="center">
         <h2 class="question">Wand at the ready.</h2>
         <p class="tagline">The host hasn't opened the first question yet. Keep this page open —
-          it'll jump to the vote by itself.</p>
+          it'll jump to the vote by itself. Each question stays open for
+          ${QUESTION_SECONDS} seconds, so keep your thumb ready.</p>
         ${statusPill()}
       </div>`;
   }
@@ -507,43 +579,60 @@ function viewGuest() {
       <p class="guest-msg">${mine ? `You picked ${mine.toUpperCase()} — ${esc(Q[mine])}.` : "You sat this one out."}</p>
     </div>`;
   }
+  const closed = timeUp();
   return `<div class="center">
     ${questionBlock()}
-    ${optionCards({ asButtons: true, disabled: !!mine, chosen: mine })}
+    ${countdown()}
+    ${optionCards({ asButtons: true, disabled: !!mine || closed, chosen: mine })}
     <p class="guest-msg">${mine
       ? "Vote received. Sit tight for the reveal…"
-      : "Tap your prediction. One vote per question — choose wisely."}</p>
+      : closed
+        ? "Time's up — this one closed before you tapped. Next question shortly…"
+        : "Tap fast. One vote per question — choose wisely."}</p>
   </div>`;
 }
 
 function render() {
-  app.innerHTML = role === "host" ? viewHost() : role === "guest" ? viewGuest() : viewLanding();
+  app.innerHTML = role === "host" ? viewHost() : viewGuest();
 }
 
 /* ----------------------------------------------------------------------------
    6) Events (delegated, so re-rendering never loses handlers)
    -------------------------------------------------------------------------- */
 app.addEventListener("click", (e) => {
-  const el = e.target.closest("[data-role],[data-act],[data-vote]");
+  const el = e.target.closest("[data-act],[data-vote]");
   if (!el) return;
 
-  if (el.dataset.role) { role = el.dataset.role; return render(); }
-
-  if (el.dataset.act === "begin")  return setState({ qIndex: 0, phase: "voting" });
-  if (el.dataset.act === "reveal") return setState({ qIndex: state.qIndex, phase: "revealed" });
+  if (el.dataset.act === "begin")  return setState({ qIndex: 0, phase: "voting", startsAt: now() });
+  if (el.dataset.act === "reveal") return setState({ qIndex: state.qIndex, phase: "revealed", startsAt: 0 });
   if (el.dataset.act === "next")   return setState(
-      state.qIndex >= TOTAL - 1 ? { qIndex: state.qIndex, phase: "end" }
-                                : { qIndex: state.qIndex + 1, phase: "voting" });
+      state.qIndex >= TOTAL - 1 ? { qIndex: state.qIndex, phase: "end", startsAt: 0 }
+                                : { qIndex: state.qIndex + 1, phase: "voting", startsAt: now() });
   if (el.dataset.act === "reset")  { myVotes.clear(); return resetAll(); }
 
   if (el.dataset.vote) {
     const choice = el.dataset.vote, i = state.qIndex;
-    if (state.phase !== "voting" || myVotes.has(i)) return;   // one vote per question
+    if (state.phase !== "voting" || myVotes.has(i) || timeUp()) return;  // once, and only before time runs out
     myVotes.set(i, choice);
     render();                                                 // instant local feedback
     castVote(i, choice);
   }
 });
+
+/* ----------------------------------------------------------------------------
+   7) The clock. Re-renders only when the displayed second changes, and lets the
+      host's screen (one writer, so no double-write) close voting at zero.
+   -------------------------------------------------------------------------- */
+let shownSec = null, autoRevealed = null;
+setInterval(() => {
+  const left = secsLeft();
+  if (left === null) { shownSec = null; return; }
+  if (left !== shownSec) { shownSec = left; render(); }
+  if (left === 0 && role === "host" && autoRevealed !== state.qIndex) {
+    autoRevealed = state.qIndex;      // the round-trip takes a moment; only write once
+    setState({ qIndex: state.qIndex, phase: "revealed", startsAt: 0 });
+  }
+}, 200);
 
 render();
 initSync();
