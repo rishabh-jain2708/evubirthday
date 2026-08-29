@@ -36,9 +36,11 @@ turn it into a QR code without typing anything.
 
 ## Scan-to-join QR
 
-The host screen shows a QR code of the guest link in the top-left corner, on
-the lobby and on every question — so anyone arriving late can point a camera
-at the big screen and be voting in seconds, without you reading a URL aloud.
+Before you start, the host screen shows the QR **large and centred**, so the
+whole room can scan it at once from wherever they're standing. The moment you
+hit Begin Voting it shrinks to the top-left corner and stays there for every
+question — out of the way, but still there for anyone arriving late. It
+retires on the closing screen.
 
 It's generated in the page (qrcode-generator, MIT, inlined — no QR service is
 contacted and nothing about your party leaves the browser), and it encodes

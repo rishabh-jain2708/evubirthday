@@ -295,6 +295,23 @@
     display:block; margin:.5em 0 .1em; color:var(--cream); word-break:break-all;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92rem;
   }
+  /* ---- lobby QR: big, centred, scannable from across the room ---- */
+  .qrbig{
+    margin:.4em auto 1.6em; text-align:center;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .qrbig .qrframe{
+    background:var(--cream); border-radius:16px; padding:clamp(10px,1.4vw,18px);
+    border:1px solid var(--line);
+    box-shadow:0 0 60px rgba(232,198,90,.28), 0 18px 50px rgba(0,0,0,.5);
+    width:clamp(190px,34vh,320px);
+  }
+  .qrbig svg{display:block; width:100%; height:auto}
+  .qrbig-cap{
+    margin:.85em 0 0; font-variant:small-caps; letter-spacing:.2em;
+    color:var(--gold-lt); font-size:clamp(.85rem,1.8vw,1.15rem);
+  }
+
   /* ---- language toggle (guest) ---- */
   .langrow{display:flex; justify-content:flex-end; margin:0 0 .6em}
   .langbtn{
@@ -901,7 +918,9 @@ function paintMusicButton() {
 
 // The QR is for people who still need to join; retire it on the closing screen.
 function paintHostChrome() {
-  if (qrEl) qrEl.style.display = state.phase === "end" ? "none" : "";
+  // In the lobby the QR is big and centred, and on the closing screen it's
+  // done its job — the corner card belongs to the questions in between.
+  if (qrEl) qrEl.style.display = (state.phase === "lobby" || state.phase === "end") ? "none" : "";
   paintMusicButton();
 }
 
@@ -920,6 +939,16 @@ const langToggle = () => role === "host" ? "" : `
       <span class="globe">⌘</span>${T().langName}
     </button>
   </div>`;
+
+// The lobby's big centred QR — everyone in the room scans this before the
+// first question. Once voting starts it gives way to the corner card.
+const qrBig = () => {
+  const svg = guestQrSvg();
+  return svg ? `<div class="qrbig">
+      <div class="qrframe">${svg}</div>
+      <p class="qrbig-cap">Scan to join the sorting</p>
+    </div>` : "";
+};
 
 // Closing-screen portrait. Skips itself cleanly if the image file isn't there.
 const portrait = (k, winner) => `
@@ -1021,10 +1050,11 @@ function viewHost() {
   if (state.phase === "lobby") {
     return `${header("The Great Hall is filling up. Hand out the link, then begin when everyone's settled.")}
       <div class="center">
+        ${qrBig()}
         <div class="controls"><button class="btn primary big" data-act="begin">Begin Voting</button></div>
         ${statusPill()}
         <div class="linkbox">
-          <span class="cap">guests open this link</span>
+          <span class="cap">or open this link</span>
           <code>${esc(GUEST_LINK)}</code>
         </div>
         <p class="footer-note">${TOTAL} questions · ${QUESTION_SECONDS} seconds each · guests vote from their own phones</p>
