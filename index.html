@@ -298,13 +298,13 @@ const QUESTIONS = [
    single-device DEMO mode so you can rehearse the flow before setting up sync.
 */
 const firebaseConfig = {
-  apiKey:            "PASTE_YOUR_API_KEY",
-  authDomain:        "PASTE_YOUR_PROJECT.firebaseapp.com",
-  databaseURL:       "https://PASTE_YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId:         "PASTE_YOUR_PROJECT",
-  storageBucket:     "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId:             "PASTE_APP_ID",
+  apiKey:            "AIzaSyAcc3_ATCT5LSO39lIbKTU1Be65ekZjeFw",
+  authDomain:        "evaansh.firebaseapp.com",
+  databaseURL:       "https://evaansh-default-rtdb.firebaseio.com",
+  projectId:         "evaansh",
+  storageBucket:     "evaansh.firebasestorage.app",
+  messagingSenderId: "304718861255",
+  appId:             "1:304718861255:web:0c7ad8fe5fcfaf589c7fe2",
 };
 
 const ROOT = "sortingvote";  // change to run two parties off one Firebase project
@@ -321,7 +321,9 @@ const myVotes = new Map();             // qIndex -> 'a'|'b'  (in-memory, per tab
 
 const app = document.getElementById("app");
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
-const tally = (i) => votes[i] || { a: 0, b: 0 };
+// Firebase omits keys that have no value, so a question with only A-votes
+// comes back as { a: 1 } — normalise both sides to numbers.
+const tally = (i) => { const t = votes[i] || {}; return { a: t.a || 0, b: t.b || 0 }; };
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
 
 /* ----------------------------------------------------------------------------
@@ -329,41 +331,49 @@ const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
       Falls back to an in-memory demo store when the config is still a placeholder.
    -------------------------------------------------------------------------- */
 const CONFIGURED = !JSON.stringify(firebaseConfig).includes("PASTE_");
-let setState, castVote, resetAll;
 
-if (CONFIGURED) {
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getDatabase, ref, onValue, set, remove, runTransaction } =
-    await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+// Assigned by initSync(), which is called at the very bottom of this script —
+// after the view functions exist. Firebase fires its listeners (and therefore
+// render()) the instant they're attached, so wiring sync up any earlier would
+// call render() before the views are initialised.
+let setState = () => {}, castVote = () => {}, resetAll = () => {};
 
-  const db = getDatabase(initializeApp(firebaseConfig));
-  const stateRef = ref(db, ROOT + "/state");
-  const votesRef = ref(db, ROOT + "/votes");
+async function initSync() {
+  if (CONFIGURED) {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const { getDatabase, ref, onValue, set, remove, runTransaction } =
+      await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
 
-  onValue(ref(db, ".info/connected"), (snap) => { connected = snap.val() === true; render(); });
-  onValue(stateRef, (snap) => {
-    const v = snap.val();
-    state = v && typeof v.qIndex === "number" ? { qIndex: v.qIndex, phase: v.phase || "lobby" }
-                                              : { qIndex: 0, phase: "lobby" };
-    render();
-  });
-  onValue(votesRef, (snap) => { votes = snap.val() || {}; render(); });
+    const db = getDatabase(initializeApp(firebaseConfig));
+    const stateRef = ref(db, ROOT + "/state");
+    const votesRef = ref(db, ROOT + "/votes");
 
-  setState = (next) => set(stateRef, next);
-  // Atomic increment so simultaneous taps can't clobber each other.
-  castVote = (qIndex, choice) =>
-    runTransaction(ref(db, `${ROOT}/votes/${qIndex}/${choice}`), (n) => (n || 0) + 1);
-  resetAll = async () => { await remove(votesRef); await set(stateRef, { qIndex: 0, phase: "lobby" }); };
+    onValue(ref(db, ".info/connected"), (snap) => { connected = snap.val() === true; render(); });
+    onValue(stateRef, (snap) => {
+      const v = snap.val();
+      state = v && typeof v.qIndex === "number" ? { qIndex: v.qIndex, phase: v.phase || "lobby" }
+                                                : { qIndex: 0, phase: "lobby" };
+      render();
+    });
+    onValue(votesRef, (snap) => { votes = snap.val() || {}; render(); });
 
-} else {
-  // DEMO MODE: single device only. Lets you rehearse before Firebase is wired up.
-  connected = false;
-  setState  = (next) => { state = next; render(); };
-  castVote  = (qIndex, choice) => {
-    const t = { ...tally(qIndex) }; t[choice] = (t[choice] || 0) + 1;
-    votes = { ...votes, [qIndex]: t }; render();
-  };
-  resetAll  = () => { votes = {}; state = { qIndex: 0, phase: "lobby" }; render(); };
+    setState = (next) => set(stateRef, next);
+    // Atomic increment so simultaneous taps can't clobber each other.
+    castVote = (qIndex, choice) =>
+      runTransaction(ref(db, `${ROOT}/votes/${qIndex}/${choice}`), (n) => (n || 0) + 1);
+    resetAll = async () => { await remove(votesRef); await set(stateRef, { qIndex: 0, phase: "lobby" }); };
+
+  } else {
+    // DEMO MODE: single device only. Lets you rehearse before Firebase is wired up.
+    connected = false;
+    setState  = (next) => { state = next; render(); };
+    castVote  = (qIndex, choice) => {
+      const t = { ...tally(qIndex) }; t[choice] = (t[choice] || 0) + 1;
+      votes = { ...votes, [qIndex]: t }; render();
+    };
+    resetAll  = () => { votes = {}; state = { qIndex: 0, phase: "lobby" }; render(); };
+  }
+  render();
 }
 
 /* ----------------------------------------------------------------------------
@@ -536,6 +546,7 @@ app.addEventListener("click", (e) => {
 });
 
 render();
+initSync();
 </script>
 </body>
 </html>
