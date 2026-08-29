@@ -3,17 +3,18 @@
 A live A/B voting web app for a Harry Potter–themed 1st birthday party.
 One self-contained `index.html` — no build step, no backend, no accounts.
 
-It isn't a quiz — there are no right answers. Every question pits
-**Anchit's** prediction (option A, Gryffindor crimson) against **Gunjan's**
-(option B, Slytherin emerald), and the room picks a side. The closing screen
-tallies the whole night. Rename `PARENT_A` / `PARENT_B` at the top of
-`index.html` and every screen, including the scoreboard, follows.
+It isn't a quiz — there are no right answers. Every question is a "who?" —
+*who spoils him, who says no, who wakes first when he cries* — and the two
+options are simply the two parents' photographs. Guests tap a face; nothing
+is written on the cards. The closing screen tallies the whole night.
+
+Rename `PARENT_A` / `PARENT_B` (both scripts) at the top of `index.html` and
+every screen follows, scoreboard included.
 
 - **Host** opens the *host link* on a laptop/TV and drives the pacing:
-  Begin Voting → Reveal Results → Next Question, ×14, then an end screen.
+  Begin Voting → Reveal Results → Next Question, through all 16, then an end screen.
 - **Guests** open the *guest link* on their phones and tap one of the two
-  photos — every question is Anchit's picture against Gunjan's, with the
-  option written across the bottom of each.
+  photographs — Anchit or Gunjan — for each of the 16 questions.
 - Everything syncs live across every device via Firebase Realtime Database.
 
 ## The two links
@@ -84,7 +85,7 @@ When the host finishes the last question, both screens show the night's
 totals:
 
 - both parents' portraits either side of the split, the winner ringed in gold
-- the overall split — every vote across all 14 questions, as a percentage
+- the overall split — every vote across all the questions, as a percentage
 - how many questions each parent won, plus ties, and the total votes cast
 - the most one-sided question and the closest call
 - a question-by-question breakdown with a crimson/emerald split bar each

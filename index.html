@@ -134,16 +134,16 @@
   }
   /* The photograph itself carries nothing — no text, no scrim, no overlay. */
   .optframe{display:block; position:relative; width:100%; aspect-ratio:16/11;
-    max-height:23vh; overflow:hidden}
+    max-height:26vh; overflow:hidden}
   .optpic{
     position:absolute; inset:0; width:100%; height:100%;
     object-fit:cover; object-position:center 34%;
   }
   .opt.nopic .optframe{display:none}
-  .opttext{
-    display:flex; flex-direction:column; gap:.2em;
-    padding:.5em .7em .6em;
-  }
+  /* Only shown if a photo is missing, so the card is never a blank slab. */
+  .optfallback{display:none; padding:1.4em .8em; font-size:clamp(1.1rem,3vw,1.6rem);
+    font-variant:small-caps; letter-spacing:.16em; color:var(--cream)}
+  .opt.nopic .optfallback{display:block}
   .opt .letter{
     font-size:clamp(.95rem,2vw,1.25rem); font-variant:small-caps; letter-spacing:.2em;
     color:var(--gold-lt);
@@ -151,12 +151,11 @@
   .opt .label{font-size:clamp(1rem,2.4vw,1.45rem); line-height:1.25}
   .opt.a{border-color:rgba(184,56,59,.85); box-shadow:0 10px 30px rgba(138,18,21,.35)}
   .opt.b{border-color:rgba(47,107,69,.9);   box-shadow:0 10px 30px rgba(26,71,42,.38)}
-  .opt.a .opttext{background:linear-gradient(180deg, rgba(90,12,14,.55), rgba(60,8,10,.75))}
-  .opt.b .opttext{background:linear-gradient(180deg, rgba(18,52,31,.6), rgba(10,34,20,.8))}
+
   /* no photo yet: fall back to the flat house colours */
   .opt.nopic.a{background:linear-gradient(165deg, var(--gryff-1), var(--gryff-0))}
   .opt.nopic.b{background:linear-gradient(165deg, var(--slyth-1), var(--slyth-0))}
-  .opt.nopic .opttext{background:none; padding:clamp(18px,3.5vw,32px)}
+
   button.opt:hover{transform:translateY(-2px)}
   button.opt:disabled{cursor:default; opacity:.55; transform:none}
   .opt.chosen{outline:3px solid var(--gold-lt); outline-offset:2px; opacity:1 !important;
@@ -422,6 +421,10 @@
      and short — a phone gets the tall portrait crop instead. */
   @media (min-width:781px){
     .optframe{max-height:34vh}
+    /* The QR sits top-left and the music button top-right, so the question
+       above the cards needs a lane of its own between them. */
+    :root[data-role="host"] .qmeta,
+    :root[data-role="host"] .question{padding-inline:clamp(150px,17vw,240px)}
   }
   /* One column below the two-column threshold. auto-fit alone can leave a
      second column hanging off-screen on a phone, so pin it explicitly. */
@@ -491,64 +494,61 @@ const PARENT_B_PIC  = "img/gunjan.jpg";
 const PARENT_A_CARD = "img/anchit-card.jpg";   // tall, the tappable option
 const PARENT_B_CARD = "img/gunjan-card.jpg";
 
-/* Each entry carries both languages. Add or remove entries freely — the
-   "of N" counter, the timer and the scoreboard all follow the array. */
+/* Every question is a "who?" — the two photographs are the answer, so the
+   option cards carry no text at all. Each entry needs the question in both
+   languages; the options are always the two parents. Add or remove entries
+   freely, the counter and scoreboard follow the array. */
+const A = { en: PARENT_A, hi: PARENT_A_HI };
+const B = { en: PARENT_B, hi: PARENT_B_HI };
+
 const QUESTIONS = [
-  { q:{en:"The Sorting Hat lands on Baby's head and shouts…",       hi:"सॉर्टिंग हैट बेबी के सिर पर आते ही चिल्लाएगा…"},
-    a:{en:"Gryffindor — brave, loud, fearless",                     hi:"ग्रिफ़िंडोर — बहादुर, बेधड़क, दिलवाला"},
-    b:{en:"Slytherin — clever, sneaky, gets their way",             hi:"स्लिदरिन — चालाक, चतुर, अपनी बात मनवाने वाला"} },
+  { q:{en:"Who is more likely to spoil the baby?",
+       hi:"बेबी को सबसे ज़्यादा कौन बिगाड़ेगा?"}, a:A, b:B },
 
-  { q:{en:"Baby's first proper word will sound closer to…",         hi:"बेबी का पहला असली शब्द किससे मिलता-जुलता होगा?"},
-    a:{en:"“Accio!”",                                               hi:"“एक्सियो!”"},
-    b:{en:"“Mama!”",                                                hi:"“मामा!”"} },
+  { q:{en:"Who will say “No” more often?",
+       hi:"“ना” ज़्यादा कौन कहेगा?"}, a:A, b:B },
 
-  { q:{en:"Baby's Patronus takes the shape of…",                    hi:"बेबी का पैट्रोनस किस रूप में आएगा?"},
-    a:{en:"A lion",                                                 hi:"एक शेर"},
-    b:{en:"A stag",                                                 hi:"एक हिरण"} },
+  { q:{en:"Who wakes up first when the baby cries?",
+       hi:"बेबी के रोते ही पहले कौन उठेगा?"}, a:A, b:B },
 
-  { q:{en:"Cake smash strategy — Baby goes in like…",               hi:"केक स्मैश में बेबी केक पर टूट पड़ेगा, जैसे…"},
-    a:{en:"A hungry Hippogriff",                                    hi:"एक भूखा हिप्पोग्रिफ़"},
-    b:{en:"A starving Dementor",                                    hi:"एक भूखा डिमेंटर"} },
+  { q:{en:"Who takes more photos and videos of the baby?",
+       hi:"बेबी की फ़ोटो और वीडियो ज़्यादा कौन खींचेगा?"}, a:A, b:B },
 
-  { q:{en:"Baby takes their first real steps…",                     hi:"बेबी अपने पहले असली कदम कब रखेगा?"},
-    a:{en:"Well before turning 2",                                  hi:"दो साल से पहले ही"},
-    b:{en:"Mid-party, with everyone filming",                       hi:"पार्टी के बीचों-बीच, जब सब कैमरा लिए खड़े हों"} },
+  { q:{en:"Who is more likely to buy something the baby doesn't need? 😂",
+       hi:"बेबी के लिए बेमतलब की चीज़ें कौन ख़रीद लाएगा? 😂"}, a:A, b:B },
 
-  { q:{en:"The one toy Baby refuses to sleep without…",             hi:"वो एक खिलौना, जिसके बिना बेबी सोएगा ही नहीं…"},
-    a:{en:"A wand",                                                 hi:"एक जादुई छड़ी"},
-    b:{en:"A stuffed owl",                                          hi:"एक उल्लू वाला सॉफ्ट टॉय"} },
+  { q:{en:"Who can calm the baby faster?",
+       hi:"बेबी को जल्दी कौन चुप करा लेगा?"}, a:A, b:B },
 
-  { q:{en:"Look closely — Baby takes after…",                       hi:"ग़ौर से देखिए — बेबी की शक्ल किस पर गई है?"},
-    a:{en:PARENT_A,                                                 hi:PARENT_A_HI},
-    b:{en:PARENT_B,                                                 hi:PARENT_B_HI} },
+  { q:{en:"Who knows exactly what the baby wants, just by looking at him?",
+       hi:"बेबी को देखते ही कौन समझ जाएगा कि उसे क्या चाहिए?"}, a:A, b:B },
 
-  { q:{en:"It's 3 a.m. Baby will only settle for…",                 hi:"रात के तीन बजे बेबी सिर्फ़ किसकी गोद में चुप होगा?"},
-    a:{en:PARENT_A,                                                 hi:PARENT_A_HI},
-    b:{en:PARENT_B,                                                 hi:PARENT_B_HI} },
+  { q:{en:"Who gives in first when the baby throws a tantrum?",
+       hi:"बेबी के ज़िद करने पर पहले कौन पिघल जाएगा?"}, a:A, b:B },
 
-  { q:{en:"Baby's mischief is inherited from…",                     hi:"बेबी की शरारतें किससे विरासत में मिली हैं?"},
-    a:{en:PARENT_A,                                                 hi:PARENT_A_HI},
-    b:{en:PARENT_B,                                                 hi:PARENT_B_HI} },
+  { q:{en:"Who will be more protective?",
+       hi:"ज़्यादा प्रोटेक्टिव कौन होगा?"}, a:A, b:B },
 
-  { q:{en:"Baby's Quidditch position will be…",                     hi:"बेबी की क्विडिच पोज़िशन क्या होगी?"},
-    a:{en:"Seeker — first to spot the snacks",                      hi:"सीकर — स्नैक्स सबसे पहले ढूँढ लेगा"},
-    b:{en:"Keeper — guards the toys with their life",               hi:"कीपर — खिलौनों की जान से रखवाली करेगा"} },
+  { q:{en:"Who will be the stricter parent?",
+       hi:"सख़्त पैरेंट कौन बनेगा?"}, a:A, b:B },
 
-  { q:{en:"The bedtime story on repeat for the next five years…",   hi:"अगले पाँच साल तक हर रात यही कहानी चलेगी…"},
-    a:{en:"Harry Potter",                                           hi:"हैरी पॉटर"},
-    b:{en:"Goodnight Moon",                                         hi:"गुडनाइट मून"} },
+  { q:{en:"Who will be more nervous when he starts dating?",
+       hi:"जब वो डेटिंग शुरू करेगा, ज़्यादा घबराएगा कौन?"}, a:A, b:B },
 
-  { q:{en:"Baby's first attempted “spell” will sound like…",        hi:"बेबी का पहला “जादू” कुछ ऐसा सुनाई देगा…"},
-    a:{en:"“Accio bottle!”",                                        hi:"“एक्सियो बोतल!”"},
-    b:{en:"“Expecto snacko!”",                                      hi:"“एक्सपेक्टो स्नैको!”"} },
+  { q:{en:"Who will help him with his homework?",
+       hi:"होमवर्क में उसकी मदद कौन करेगा?"}, a:A, b:B },
 
-  { q:{en:"Baby will sleep straight through…",                      hi:"बेबी पूरी नींद में सोता रहेगा…"},
-    a:{en:"The cake cutting",                                       hi:"केक कटने के दौरान"},
-    b:{en:"The gift opening",                                       hi:"गिफ़्ट खुलने के दौरान"} },
+  { q:{en:"Who will slip him extra pocket money?",
+       hi:"चुपके से ज़्यादा पॉकेट मनी कौन देगा?"}, a:A, b:B },
 
-  { q:{en:"Twenty years on, Baby tops the class in…",               hi:"बीस साल बाद बेबी सबसे आगे होगा…"},
-    a:{en:"Quidditch",                                              hi:"क्विडिच में"},
-    b:{en:"Potions",                                                hi:"पोशन्स क्लास में"} },
+  { q:{en:"Who defends him first when someone complains about him?",
+       hi:"कोई उसकी शिकायत करे तो सबसे पहले कौन बचाव करेगा?"}, a:A, b:B },
+
+  { q:{en:"Who's the fun parent he goes to when he wants to break a rule? 😂",
+       hi:"नियम तोड़ने हों तो वो किस पैरेंट के पास जाएगा? 😂"}, a:A, b:B },
+
+  { q:{en:"Who will check his phone when he's a teenager?",
+       hi:"टीनएजर होने पर उसका फ़ोन कौन चेक करेगा?"}, a:A, b:B },
 ];
 
 /* ----------------------------------------------------------------------------
@@ -615,16 +615,16 @@ const ROOT = "sortingvote";  // change to run two parties off one Firebase proje
 const STRINGS = {
   en: {
     langName:"हिंदी",         eyebrow:"✨ A Magical First Birthday ✨",
-    tagline:`Fourteen questions. Two parents. One very small wizard. Take ${PARENT_A}'s side or ${PARENT_B}'s — the Great Hall is taking votes.`,
+    tagline:(n)=>`${n} questions. Two parents. One very small wizard. Back ${PARENT_A} or back ${PARENT_B} — the Great Hall is taking votes.`,
     waitTitle:"Wand at the ready.",
-    waitBody:(secs)=>`The host hasn't opened the first question yet. Keep this page open — it'll jump to the vote by itself. Each question stays open for ${secs} seconds, so keep your thumb ready.`,
+    waitBody:(secs)=>`The host hasn't opened the first question yet. Keep this page open — it'll jump to the vote by itself. Every question is the same choice: tap ${PARENT_A} or tap ${PARENT_B}. You get ${secs} seconds each, so keep your thumb ready.`,
     qOf:(i,n)=>`Question ${i} of ${n}`,
     says:"says",              secsLeft:(n)=>`${n}s left`,          timesUp:"time's up",
-    tapFast:"Tap fast. One vote per question — choose wisely.",
+    tapFast:"Tap a face. One vote per question — choose wisely.",
     voteIn:"Vote received. Sit tight for the reveal…",
     tooLate:"Time's up — this one closed before you tapped. Next question shortly…",
     votesCast:(n)=>`${n} vote${n===1?"":"s"} cast`,
-    youPicked:(side,txt)=>`You picked ${side} — ${txt}.`,
+    youPicked:(side,txt)=>`You picked ${txt}.`,
     satOut:"You sat this one out.",
     thanks:"Thanks for voting ✨",
     cake:(baby)=>`Now go get cake before ${baby} does.`,
@@ -642,16 +642,16 @@ const STRINGS = {
   },
   hi: {
     langName:"English",       eyebrow:"✨ एक जादुई पहला जन्मदिन ✨",
-    tagline:`चौदह सवाल। दो पैरेंट्स। और एक नन्हा जादूगर। ${PARENT_A_HI} का साथ दीजिए या ${PARENT_B_HI} का — ग्रेट हॉल में वोटिंग शुरू है।`,
+    tagline:(n)=>`${n} सवाल। दो पैरेंट्स। और एक नन्हा जादूगर। ${PARENT_A_HI} का साथ दीजिए या ${PARENT_B_HI} का — ग्रेट हॉल में वोटिंग शुरू है।`,
     waitTitle:"छड़ी तैयार रखिए।",
-    waitBody:(secs)=>`होस्ट ने अभी पहला सवाल खोला नहीं है। यह पेज खुला रहने दीजिए — सवाल आते ही यह अपने आप बदल जाएगा। हर सवाल सिर्फ़ ${secs} सेकंड के लिए खुलेगा, इसलिए उँगली तैयार रखिए।`,
+    waitBody:(secs)=>`होस्ट ने अभी पहला सवाल खोला नहीं है। यह पेज खुला रहने दीजिए — सवाल आते ही यह अपने आप बदल जाएगा। हर सवाल में चुनाव एक ही है: ${PARENT_A_HI} या ${PARENT_B_HI}। हर सवाल के लिए ${secs} सेकंड मिलेंगे, इसलिए उँगली तैयार रखिए।`,
     qOf:(i,n)=>`सवाल ${i} / ${n}`,
     says:"का कहना है",         secsLeft:(n)=>`${n} सेकंड बाक़ी`,    timesUp:"समय ख़त्म",
-    tapFast:"जल्दी चुनिए। हर सवाल में सिर्फ़ एक वोट — सोच-समझकर।",
+    tapFast:"चेहरा चुनिए। हर सवाल में सिर्फ़ एक वोट — सोच-समझकर।",
     voteIn:"वोट मिल गया। अब नतीजे का इंतज़ार कीजिए…",
     tooLate:"समय ख़त्म — इस बार वोट नहीं गिना गया। अगला सवाल बस आने ही वाला है…",
     votesCast:(n)=>`कुल ${n} वोट`,
-    youPicked:(side,txt)=>`आपने ${side} चुना — ${txt}।`,
+    youPicked:(side,txt)=>`आपने ${txt} को चुना।`,
     satOut:"इस बार आपने वोट नहीं दिया।",
     thanks:"वोट देने के लिए शुक्रिया ✨",
     cake:(baby)=>`अब जल्दी से केक लीजिए, इससे पहले कि ${baby} सब चट कर जाए।`,
@@ -942,17 +942,16 @@ const optionCards = ({ disabled, chosen, asButtons }) => {
   const one = (k) => {
     const tag = asButtons ? "button" : "div";
     const attrs = asButtons ? ` data-vote="${k}"${disabled ? " disabled" : ""}` : "";
-    const text = ot(state.qIndex, k), isName = text === NAME(k);
     const pic = k === "a" ? PARENT_A_CARD : PARENT_B_CARD;
-    return `<${tag} class="opt ${k}${chosen === k ? " chosen" : ""}"${attrs}>
+    // Photograph only. The alt text keeps it answerable for screen readers
+    // without printing anything on the card.
+    return `<${tag} class="opt ${k}${chosen === k ? " chosen" : ""}"${attrs}
+            aria-label="${esc(NAME(k))}">
       <span class="optframe">
         <img class="optpic" src="${pic}" alt="${esc(NAME(k))}" loading="eager"
              onerror="this.closest('.opt').classList.add('nopic')">
       </span>
-      <span class="opttext">
-        <span class="letter">${k.toUpperCase()} · ${esc(NAME(k))}</span>
-        ${isName ? "" : `<span class="label">${esc(text)}</span>`}
-      </span>
+      <span class="optfallback">${esc(NAME(k))}</span>
     </${tag}>`;
   };
   return `<div class="options">${one("a")}${one("b")}</div>`;
@@ -1143,7 +1142,7 @@ const questionBlock = () => `
 
 function viewHost() {
   if (state.phase === "lobby") {
-    return `${header("The Great Hall is filling up. Hand out the link, then begin when everyone's settled.")}
+    return `${header(`${TOTAL} questions, and every one of them is the same: ${PARENT_A} or ${PARENT_B}? Scan in, then begin when everyone's settled.`)}
       <div class="center">
         ${qrBig()}
         <div class="controls"><button class="btn primary big" data-act="begin">Begin Voting</button></div>
@@ -1189,7 +1188,7 @@ function viewHost() {
 function viewGuest() {
   if (state.phase === "lobby") {
     return `${langToggle()}
-      ${header(T().tagline)}
+      ${header(T().tagline(TOTAL))}
       <div class="center">
         <h2 class="question">${T().waitTitle}</h2>
         <p class="tagline">${T().waitBody(QUESTION_SECONDS)}</p>
@@ -1233,6 +1232,7 @@ function viewGuest() {
 
 function render() {
   document.documentElement.lang = role === "host" ? "en" : lang;
+  document.documentElement.dataset.role = role;
   app.innerHTML = role === "host" ? viewHost() : viewGuest();
   paintHostChrome();
 }
