@@ -127,7 +127,7 @@
   .options{display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2.5vw,24px)}
   .opt{
     border-radius:18px; padding:0; text-align:center; overflow:hidden;
-    border:2px solid rgba(255,255,255,.16);
+    border:2px solid rgba(255,255,255,.16); position:relative;
     display:flex; flex-direction:column; width:100%;
     transition:transform .15s ease, box-shadow .2s ease, opacity .2s ease;
     color:var(--cream); background:rgba(0,0,0,.28);
@@ -162,8 +162,9 @@
   .opt.chosen{outline:3px solid var(--gold-lt); outline-offset:2px; opacity:1 !important;
     border-color:var(--gold-lt); box-shadow:0 0 40px rgba(232,198,90,.45)}
   .opt.chosen::after{
-    content:"your vote"; position:absolute; top:10px; right:12px;
+    content:"your vote"; position:absolute; top:8px; right:10px; z-index:2;
     font-size:.68rem; letter-spacing:.18em; font-variant:small-caps; color:var(--gold-lt);
+    background:rgba(11,14,35,.75); border-radius:999px; padding:.15em .7em;
   }
 
   /* ---- House point vials (results) ---- */
@@ -569,22 +570,25 @@ const QUESTIONS = [
         {
           "rules": {
             "sortingvote": {
-              "state": { ".read": true, ".write": true },
+              "pub":   { ".read": true, ".write": true },
               "votes": {
                 ".read": true,
+                ".write": true,
                 "$q": {
-                  "a": { ".read": true, ".write": true, ".validate": "newData.isNumber()" },
-                  "b": { ".read": true, ".write": true, ".validate": "newData.isNumber()" },
-                  "$other": { ".validate": false }
+                  "$vote": {
+                    ".validate": "newData.isString() && (newData.val() == 'a' || newData.val() == 'b')"
+                  }
                 }
               }
             }
           }
         }
 
-      That is open read/write scoped to this app's own subtree only — fine for a
-      party, and nothing else in the database is exposed. Delete the project
+      Open read/write, scoped to this app's own subtree, with each vote
+      validated as the string "a" or "b" — appropriate for a party app with no
+      auth layer. Nothing else in the database is exposed. Delete the project
       after the party if you like.
+
    5. Deploy this file as index.html on GitHub Pages. Firebase's default
       allowed domains already include your <user>.github.io site for RTDB;
       no extra allow-listing is needed (that step is only for Auth).
@@ -786,36 +790,42 @@ const CONFIGURED = !JSON.stringify(firebaseConfig).includes("PASTE_");
 // call render() before the views are initialised.
 let setState = () => {}, castVote = () => {}, resetAll = () => {};
 
+/* ----------------------------------------------------------------------------
+   Two sync paths, because Firebase's free tier caps *live* connections at 100:
+
+   HOST   — one device, one live socket. Sees votes arrive in real time and is
+            the only writer of the published tallies.
+   GUESTS — no socket at all. They poll one tiny endpoint over plain HTTPS, so
+            they don't consume a connection and the guest count is unlimited.
+            They also skip downloading the Firebase SDK, so their page loads
+            faster than it did on the live path.
+
+   Raw votes are APPENDED (one child per vote, unique key) rather than
+   incremented, because REST has no transactions and two simultaneous voters
+   would otherwise overwrite each other. The host counts them and republishes
+   compact tallies at reveal — a single writer, so no contention.
+
+     <root>/pub/state          { qIndex, phase, startsAt }   ← guests poll this
+     <root>/pub/tallies/<q>    { a, b }                      ← published at reveal
+     <root>/votes/<q>/<pushId> "a" | "b"                     ← raw, host reads
+   -------------------------------------------------------------------------- */
+const REST = firebaseConfig.databaseURL ? firebaseConfig.databaseURL.replace(/\/$/, "") : "";
+const POLL_MS = 700;               // guest refresh; well under human reaction time
+let lastPollOk = 0;
+
+// Turn the raw append-only votes into { [q]: {a,b} }.
+function countRaw(raw) {
+  const out = {};
+  for (const q in raw || {}) {
+    let a = 0, b = 0;
+    for (const id in raw[q]) raw[q][id] === "a" ? a++ : b++;
+    out[q] = { a, b };
+  }
+  return out;
+}
+
 async function initSync() {
-  if (CONFIGURED) {
-    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-    const { getDatabase, ref, onValue, set, remove, runTransaction } =
-      await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
-
-    const db = getDatabase(initializeApp(firebaseConfig));
-    const stateRef = ref(db, ROOT + "/state");
-    const votesRef = ref(db, ROOT + "/votes");
-
-    onValue(ref(db, ".info/connected"), (snap) => { connected = snap.val() === true; render(); });
-    // Every device counts down against Firebase's clock, not its own, so the
-    // timer reads the same on the big screen and on a phone with a lazy clock.
-    onValue(ref(db, ".info/serverTimeOffset"), (snap) => { clockSkew = snap.val() || 0; render(); });
-    onValue(stateRef, (snap) => {
-      const v = snap.val();
-      state = v && typeof v.qIndex === "number"
-        ? { qIndex: v.qIndex, phase: v.phase || "lobby", startsAt: v.startsAt || 0 }
-        : { qIndex: 0, phase: "lobby", startsAt: 0 };
-      render();
-    });
-    onValue(votesRef, (snap) => { votes = snap.val() || {}; render(); });
-
-    setState = (next) => set(stateRef, next);
-    // Atomic increment so simultaneous taps can't clobber each other.
-    castVote = (qIndex, choice) =>
-      runTransaction(ref(db, `${ROOT}/votes/${qIndex}/${choice}`), (n) => (n || 0) + 1);
-    resetAll = async () => { await remove(votesRef); await set(stateRef, { qIndex: 0, phase: "lobby", startsAt: 0 }); };
-
-  } else {
+  if (!CONFIGURED) {
     // DEMO MODE: single device only. Lets you rehearse before Firebase is wired up.
     connected = false;
     setState  = (next) => { state = next; render(); };
@@ -824,8 +834,94 @@ async function initSync() {
       votes = { ...votes, [qIndex]: t }; render();
     };
     resetAll  = () => { votes = {}; state = { qIndex: 0, phase: "lobby", startsAt: 0 }; render(); };
+    return render();
+  }
+
+  if (role === "host") {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const { getDatabase, ref, onValue, set, remove } =
+      await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+
+    const db = getDatabase(initializeApp(firebaseConfig));
+    const stateRef   = ref(db, ROOT + "/pub/state");
+    const talliesRef = ref(db, ROOT + "/pub/tallies");
+    const votesRef   = ref(db, ROOT + "/votes");
+
+    onValue(ref(db, ".info/connected"), (snap) => { connected = snap.val() === true; render(); });
+    // Everyone counts down against Firebase's clock, not their own.
+    onValue(ref(db, ".info/serverTimeOffset"), (snap) => { clockSkew = snap.val() || 0; render(); });
+    onValue(stateRef, (snap) => {
+      const v = snap.val();
+      state = v && typeof v.qIndex === "number"
+        ? { qIndex: v.qIndex, phase: v.phase || "lobby", startsAt: v.startsAt || 0 }
+        : { qIndex: 0, phase: "lobby", startsAt: 0 };
+      render();
+    });
+    onValue(votesRef, (snap) => { votes = countRaw(snap.val()); render(); });
+
+    // Publishing the tallies for a question is what lets guests see results
+    // without ever reading the raw votes, so their poll stays tiny.
+    const publish = (q) => set(ref(db, `${ROOT}/pub/tallies/${q}`), tally(q));
+
+    setState = async (next) => {
+      if (next.phase === "revealed") await publish(next.qIndex);
+      return set(stateRef, next);
+    };
+    castVote = (qIndex, choice) => restVote(qIndex, choice);   // the host rarely votes
+    resetAll = async () => {
+      await Promise.all([remove(votesRef), remove(talliesRef)]);
+      votes = {};
+      return set(stateRef, { qIndex: 0, phase: "lobby", startsAt: 0 });
+    };
+
+  } else {
+    // ---- GUEST: polling, no live connection, no SDK ----
+    setState = () => {};                       // guests never drive the game
+    castVote = (qIndex, choice) => restVote(qIndex, choice);
+    resetAll = () => {};
+
+    const poll = async () => {
+      try {
+        const r = await fetch(`${REST}/${ROOT}/pub.json`, { cache: "no-store" });
+        if (!r.ok) throw new Error(r.status);
+        const pub = await r.json() || {};
+        const v = pub.state;
+        const next = v && typeof v.qIndex === "number"
+          ? { qIndex: v.qIndex, phase: v.phase || "lobby", startsAt: v.startsAt || 0 }
+          : { qIndex: 0, phase: "lobby", startsAt: 0 };
+        const changed = next.qIndex !== state.qIndex || next.phase !== state.phase ||
+                        next.startsAt !== state.startsAt ||
+                        JSON.stringify(pub.tallies || {}) !== JSON.stringify(votes);
+        state = next;
+        votes = pub.tallies || {};
+        // Trust the Date header for the shared clock — same trick as
+        // serverTimeOffset, without needing a socket.
+        const served = Date.parse(r.headers.get("date") || "");
+        if (!Number.isNaN(served)) clockSkew = served - Date.now();
+        lastPollOk = Date.now();
+        const wasConnected = connected;
+        connected = true;
+        if (changed || !wasConnected) render();   // also repaint the "● live" pill
+      } catch (err) {
+        connected = Date.now() - lastPollOk < 4000;   // brief blips shouldn't flicker
+        render();
+      }
+    };
+    poll();
+    setInterval(poll, POLL_MS);
   }
   render();
+}
+
+// One vote = one new child with a unique key, so simultaneous voters can never
+// overwrite each other even without a transaction.
+async function restVote(qIndex, choice) {
+  try {
+    await fetch(`${REST}/${ROOT}/votes/${qIndex}.json`,
+                { method: "POST", body: JSON.stringify(choice) });
+  } catch (err) {
+    console.warn("vote failed to send:", err);
+  }
 }
 
 /* ----------------------------------------------------------------------------

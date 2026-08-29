@@ -117,13 +117,14 @@ stay open for it to fire.
 {
   "rules": {
     "sortingvote": {
-      "state": { ".read": true, ".write": true },
+      "pub":   { ".read": true, ".write": true },
       "votes": {
         ".read": true,
+        ".write": true,
         "$q": {
-          "a": { ".read": true, ".write": true, ".validate": "newData.isNumber()" },
-          "b": { ".read": true, ".write": true, ".validate": "newData.isNumber()" },
-          "$other": { ".validate": false }
+          "$vote": {
+            ".validate": "newData.isString() && (newData.val() == 'a' || newData.val() == 'b')"
+          }
         }
       }
     }
@@ -131,8 +132,27 @@ stay open for it to fire.
 }
 ```
 
-Open read/write, but scoped to this app's subtree only — appropriate for an
-anonymous party app with no auth layer. Delete the project after the party.
+Open read/write, scoped to this app's subtree only, with every vote validated
+as the string `a` or `b` — appropriate for an anonymous party app with no auth
+layer. Delete the project after the party.
+
+## How many guests it holds
+
+Unlimited, on the free plan.
+
+Firebase's free tier caps *live* connections at 100, so only the **host** holds
+one. Guests hold none: they poll a single small endpoint (`pub`, about 200
+bytes) every 700 ms over plain HTTPS, which no quota limits. They don't even
+download the Firebase SDK, so a guest's page loads faster than the host's.
+
+Because REST has no transactions, votes are **appended** — one child per vote
+with a unique key — so two people voting in the same instant can't overwrite
+each other. The host, the single writer, counts them and publishes compact
+tallies when it reveals a question; that's all a guest ever reads.
+
+At 200 guests that's roughly 285 requests/second of ~200 bytes — about 100 MB
+across a two-hour party, against a 10 GB monthly allowance. No card, no
+billing, no ceiling worth worrying about.
 
 ## Deploy to GitHub Pages
 
