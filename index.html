@@ -420,7 +420,20 @@
   /* On the big screen the two cards sit side by side, so they want to be wide
      and short — a phone gets the tall portrait crop instead. */
   @media (min-width:781px){
-    .optframe{max-height:34vh}
+    /* Cap the card WIDTH, not its height. Capping height makes the frame
+       wider than the 5:4 photo and `cover` crops the picture back out. */
+    /* width:100% matters — auto side margins cancel the flex stretch and the
+       grid would collapse to nothing. */
+    /* Card width is tied to viewport HEIGHT as well as width, so the frame
+       can always hold the photo's 5:4 shape. Cap the height instead and a
+       short screen silently re-crops the picture. */
+    .options{width:100%; max-width:min(1040px, 96vh); margin-inline:auto}
+    .optframe{max-height:none}
+    /* The whole question has to sit on one screen without scrolling, so the
+       heading gives up the room the taller photos now take. */
+    .wrap{padding-top:24px}
+    .question{font-size:clamp(1.6rem,3vw,2.4rem)}
+    .live-note{margin-bottom:.8em}
     /* The QR sits top-left and the music button top-right, so the question
        above the cards needs a lane of its own between them. */
     :root[data-role="host"] .qmeta,
@@ -1180,7 +1193,7 @@ function viewHost() {
       ${countdown()}
       <p class="live-note"><span class="pulse">${timeUp() ? "✦ Voting closed — revealing…" : "✦ Votes are arriving…"}</span></p>
       ${optionCards({ asButtons: false })}
-      <p class="live-note" style="margin-top:1.4em">Results sealed until the reveal.</p>`}
+      <p class="live-note" style="margin-top:.6em">Results sealed until the reveal.</p>`}
     <div class="controls">
       ${revealed
         ? `<button class="btn primary" data-act="next">${last ? "Finish →" : "Next Question →"}</button>`
