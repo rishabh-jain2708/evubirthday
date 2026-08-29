@@ -3,6 +3,12 @@
 A live A/B voting web app for a Harry Potter–themed 1st birthday party.
 One self-contained `index.html` — no build step, no backend, no accounts.
 
+It isn't a quiz — there are no right answers. Every question pits
+**Anchit's** prediction (option A, Gryffindor crimson) against **Gunjan's**
+(option B, Slytherin emerald), and the room picks a side. The closing screen
+tallies the whole night. Rename `PARENT_A` / `PARENT_B` at the top of
+`index.html` and every screen, including the scoreboard, follows.
+
 - **Host** opens the *host link* on a laptop/TV and drives the pacing:
   Begin Voting → Reveal Results → Next Question, ×14, then an end screen.
 - **Guests** open the *guest link* on their phones and tap A or B.
@@ -52,6 +58,20 @@ Browsers block audio until someone interacts with the page. The host's click
 *is* that interaction, so it just works — but the host has to click it; it
 can't start on its own. Pausing keeps your place in the track; play resumes
 from there.
+
+## The final scoreboard
+
+When the host finishes the last question, both screens show the night's
+totals:
+
+- the overall split — every vote across all 14 questions, as a percentage
+- how many questions each parent won, plus ties, and the total votes cast
+- the most one-sided question and the closest call
+- a question-by-question breakdown with a crimson/emerald split bar each
+
+Guests additionally see their own line — which parent they sided with, and
+how often. That's computed from the votes held in their own tab, so it's
+personal to each phone and nothing about individual voters is stored.
 
 ## The 20-second timer
 

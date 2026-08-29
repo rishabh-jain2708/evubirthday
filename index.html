@@ -279,10 +279,68 @@
     display:block; margin:.5em 0 .1em; color:var(--cream); word-break:break-all;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92rem;
   }
+  /* ---- final scoreboard ---- */
+  .endwrap{padding-bottom:2em}
+  .bigsplit{
+    text-align:center; margin:.1em 0 .5em; line-height:1.25;
+    font-size:clamp(1.6rem,5.5vw,3.2rem);
+  }
+  .bigsplit .a{color:var(--gryff-1)} .bigsplit .b{color:#57a86f}
+  .bigsplit .dash{color:var(--gold); margin:0 .35em}
+  .verdict{
+    text-align:center; color:var(--cream); font-style:italic; margin:0 auto 1.4em;
+    max-width:34em; font-size:clamp(1rem,2.3vw,1.3rem); line-height:1.6;
+  }
+  .verdict strong{color:var(--gold-lt); font-style:normal}
+  .scoreboard{
+    display:flex; gap:clamp(10px,2.4vw,26px); justify-content:center; flex-wrap:wrap;
+    margin:0 auto 1.4em;
+  }
+  .sc{
+    border:1px solid var(--line); border-radius:14px; padding:.7em 1.1em; min-width:8.5em;
+    background:linear-gradient(180deg, rgba(241,230,200,.07), rgba(0,0,0,.25)); text-align:center;
+  }
+  .sc .n{display:block; font-size:clamp(1.5rem,3.6vw,2.3rem); color:var(--gold-lt); line-height:1.1}
+  .sc .l{display:block; font-variant:small-caps; letter-spacing:.12em;
+    color:rgba(241,230,200,.65); font-size:.76rem; margin-top:.25em}
+  .sc.a{border-color:rgba(184,56,59,.55)} .sc.a .n{color:#e88b8d}
+  .sc.b{border-color:rgba(47,107,69,.6)}  .sc.b .n{color:#7fc094}
+  .footnote{
+    text-align:center; color:rgba(241,230,200,.6); font-size:.9rem;
+    max-width:44em; margin:0 auto 1.8em; line-height:1.7;
+  }
+  .footnote em{color:var(--cream); font-style:italic}
+  .breakdown{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));
+    gap:.45em clamp(18px,3vw,40px); max-width:1000px; width:100%; margin:0 auto;
+  }
+  .brow{
+    display:grid; grid-template-columns:1.5em minmax(0,1fr) 5.5em 3.4em;
+    gap:.7em; align-items:center; font-size:.86rem;
+  }
+  .brow .num{color:var(--gold); font-size:.72rem; text-align:right}
+  .brow .btxt{color:rgba(241,230,200,.8); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bbar{display:flex; height:9px; border-radius:999px; overflow:hidden;
+    background:rgba(241,230,200,.10); box-shadow:inset 0 0 0 1px rgba(241,230,200,.08)}
+  .bbar i{display:block; height:100%}
+  .bbar .ba{background:linear-gradient(90deg, var(--gryff-0), var(--gryff-1))}
+  .bbar .bb{background:linear-gradient(90deg, var(--slyth-1), var(--slyth-0))}
+  .brow .bnum{color:rgba(241,230,200,.7); font-size:.78rem; text-align:right; letter-spacing:.04em}
+  .brow .bnum.quiet{color:rgba(241,230,200,.35)}
+  .tagline.closing{margin-top:1.8em}
+
   .rule{height:1px; background:linear-gradient(90deg,transparent,var(--line),transparent); margin:2em 0}
   .footer-note{text-align:center; color:rgba(241,230,200,.45); font-size:.8rem; margin-top:2.4em}
   .hidden{display:none !important}
 
+  /* One column below the two-column threshold. auto-fit alone can leave a
+     second column hanging off-screen on a phone, so pin it explicitly. */
+  @media (max-width:780px){
+    .breakdown{grid-template-columns:1fr}
+    .brow{grid-template-columns:1.4em minmax(0,1fr) 4.5em 3.2em; font-size:.82rem}
+    .scoreboard{gap:8px}
+    .sc{min-width:7em; padding:.6em .8em}
+  }
   /* the QR card is for the big screen; a phone doesn't need to scan itself */
   @media (max-width:720px){
     .qrcard{display:none}
@@ -327,8 +385,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
    1) PERSONALISE ME — questions & copy. Edit freely; app logic never changes.
    -------------------------------------------------------------------------- */
 const BABY_NAME = "Baby";           // swap in the actual name; used in copy below
-const PARTY_TAGLINE = "Fourteen questions. Two paths. One very small wizard. " +
-                      "Grab your wand — the Great Hall is taking votes.";
+
+/* The two sides. Option A is always PARENT_A's prediction, option B always
+   PARENT_B's — that holds for every question, and the closing scoreboard
+   tallies the room across all of them. Swap the names and the whole app,
+   scoreboard included, follows. */
+const PARENT_A = "Anchit";
+const PARENT_B = "Gunjan";
+
+const PARTY_TAGLINE = "Fourteen questions. Two parents. One very small wizard. " +
+                      `Take ${PARENT_A}'s side or ${PARENT_B}'s — the Great Hall is taking votes.`;
 
 const QUESTIONS = [
   { q: "Which House will Baby be sorted into?",                 a: "Gryffindor (brave & bold)", b: "Slytherin (cunning & sly)" },
@@ -337,7 +403,7 @@ const QUESTIONS = [
   { q: "At the cake smash, Baby will attack the cake like…",    a: "A hungry Hippogriff",       b: "A starving Dementor" },
   { q: "Baby will take their first steps…",                     a: "Before turning 2",          b: "Right in the middle of a party" },
   { q: "Baby's favourite toy, forever and always, will be…",    a: "A wand",                    b: "A stuffed owl" },
-  { q: "Baby looks more like…",                                 a: "Mum",                       b: "Dad" },
+  { q: "Baby looks more like…",                                 a: PARENT_A,                    b: PARENT_B },
   { q: "Baby will cry the loudest during…",                     a: "The cake cutting",          b: "The gift opening" },
   { q: "Baby's future Quidditch position…",                     a: "Seeker",                    b: "Keeper" },
   { q: "Baby's forever bedtime story will be…",                 a: "Harry Potter",              b: "Goodnight Moon" },
@@ -495,6 +561,7 @@ const app = document.getElementById("app");
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 // Firebase omits keys that have no value, so a question with only A-votes
 // comes back as { a: 1 } — normalise both sides to numbers.
+const SIDE = { a: PARENT_A, b: PARENT_B };
 const tally = (i) => { const t = votes[i] || {}; return { a: t.a || 0, b: t.b || 0 }; };
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
 
@@ -573,7 +640,7 @@ const optionCards = ({ disabled, chosen, asButtons }) => {
     const tag = asButtons ? "button" : "div";
     const attrs = asButtons ? ` data-vote="${k}"${disabled ? " disabled" : ""}` : "";
     return `<${tag} class="opt ${k}${chosen === k ? " chosen" : ""}"${attrs}>
-      <span class="letter">${k.toUpperCase()}</span>
+      <span class="letter">${k.toUpperCase()} · ${esc(SIDE[k])} says</span>
       <span class="label">${esc(Q[k])}</span>
     </${tag}>`;
   };
@@ -591,7 +658,7 @@ const vials = () => {
         <div class="vial-pct">${pct(t[k], total)}%</div>
       </div>
       <div class="vial-label">
-        <span class="letter">${k.toUpperCase()}</span>
+        <span class="letter">${k.toUpperCase()} · ${esc(SIDE[k])}</span>
         <span class="txt">${esc(Q[k])}</span>
         <span class="count">${t[k]} vote${t[k] === 1 ? "" : "s"}</span>
       </div>
@@ -655,6 +722,76 @@ const countdown = () => {
     <div class="timerbar"><span class="${left <= 6 ? "urgent" : ""}" style="width:${pctLeft}%"></span></div>`;
 };
 
+/* ---- final scoreboard --------------------------------------------------- */
+// Everything the closing screen needs, computed from the vote tallies.
+function overall() {
+  let a = 0, b = 0, wonA = 0, wonB = 0, tied = 0, answered = 0;
+  const rows = QUESTIONS.map((Q, i) => {
+    const t = tally(i), tot = t.a + t.b;
+    a += t.a; b += t.b;
+    if (tot) {
+      answered++;
+      if (t.a > t.b) wonA++; else if (t.b > t.a) wonB++; else tied++;
+    }
+    return { i, q: Q.q, t, tot, lead: tot ? Math.abs(pct(t.a, tot) - pct(t.b, tot)) : null };
+  });
+  const scored = rows.filter(r => r.tot);
+  const byLead = [...scored].sort((x, y) => x.lead - y.lead);
+  return { a, b, total: a + b, wonA, wonB, tied, answered, rows,
+           closest: byLead[0] || null, widest: byLead[byLead.length - 1] || null };
+}
+
+// How this particular guest voted across the night.
+function myTake() {
+  let a = 0, b = 0;
+  for (const v of myVotes.values()) v === "a" ? a++ : b++;
+  return { a, b, total: a + b };
+}
+
+function scoreboard() {
+  const o = overall();
+  if (!o.total) return `<p class="tagline">No votes were cast — nothing to count.</p>`;
+
+  const pa = pct(o.a, o.total), pb = pct(o.b, o.total);
+  const verdict = o.wonA === o.wonB
+    ? `A dead heat. ${esc(PARENT_A)} and ${esc(PARENT_B)} split the room down the middle.`
+    : `The Great Hall sides with <strong>${esc(o.wonA > o.wonB ? PARENT_A : PARENT_B)}</strong>
+       — ${Math.max(o.wonA, o.wonB)} of ${o.answered} question${o.answered === 1 ? "" : "s"}.`;
+
+  const rows = o.rows.map(r => `
+    <div class="brow">
+      <span class="num">${r.i + 1}</span>
+      <span class="btxt">${esc(r.q)}</span>
+      ${r.tot ? `
+        <span class="bbar"><i class="ba" style="width:${pct(r.t.a, r.tot)}%"></i><i class="bb" style="width:${pct(r.t.b, r.tot)}%"></i></span>
+        <span class="bnum">${pct(r.t.a, r.tot)}–${pct(r.t.b, r.tot)}</span>`
+      : `<span class="bbar empty"></span><span class="bnum quiet">no votes</span>`}
+    </div>`).join("");
+
+  return `
+    <p class="eyebrow">the final tally</p>
+    <p class="bigsplit">
+      <span class="a">${esc(PARENT_A)} ${pa}%</span>
+      <span class="dash">—</span>
+      <span class="b">${pb}% ${esc(PARENT_B)}</span>
+    </p>
+    <p class="verdict">${verdict}</p>
+
+    <div class="scoreboard">
+      <div class="sc a"><span class="n">${o.wonA}</span><span class="l">questions to ${esc(PARENT_A)}</span></div>
+      ${o.tied ? `<div class="sc t"><span class="n">${o.tied}</span><span class="l">tied</span></div>` : ""}
+      <div class="sc b"><span class="n">${o.wonB}</span><span class="l">questions to ${esc(PARENT_B)}</span></div>
+      <div class="sc"><span class="n">${o.total}</span><span class="l">votes cast in all</span></div>
+    </div>
+
+    ${o.widest && o.widest.lead > 0 ? `<p class="footnote">
+      Most one-sided: <em>${esc(o.widest.q)}</em> (${o.widest.lead}-point gap).
+      ${o.closest && o.closest !== o.widest ? `Closest call: <em>${esc(o.closest.q)}</em>${o.closest.lead === 0 ? " — a perfect tie" : ` (${o.closest.lead} points)`}.` : ""}
+    </p>` : ""}
+
+    <div class="breakdown">${rows}</div>`;
+}
+
 const questionBlock = () => `
   <p class="qmeta">Question ${state.qIndex + 1} of ${TOTAL}</p>
   <h2 class="question">${esc(QUESTIONS[state.qIndex].q)}</h2>`;
@@ -673,12 +810,14 @@ function viewHost() {
       </div>`;
   }
   if (state.phase === "end") {
-    return `${header("")}
-      <div class="center">
+    return `<div class="center endwrap">
         <h2 class="question">The votes are in.</h2>
-        <p class="tagline">However ${esc(BABY_NAME)} is sorted, this lot will be cheering.
-          Thank you for casting your lot in the Great Hall tonight ✨</p>
-        <div class="controls"><button class="btn" data-act="reset">Run again from the start</button></div>
+        ${scoreboard()}
+        <p class="tagline closing">However ${esc(BABY_NAME)} turns out, this lot will be cheering ✨</p>
+        <div class="controls">
+          <button class="btn" data-act="reset">Run again from the start</button>
+          ${restartBtn()}
+        </div>
       </div>`;
   }
   const revealed = state.phase === "revealed";
@@ -713,11 +852,18 @@ function viewGuest() {
       </div>`;
   }
   if (state.phase === "end") {
-    return `${header("")}
-      <div class="center">
+    const m = myTake();
+    const yours = m.total
+      ? (m.a === m.b
+          ? `You split your ${m.total} vote${m.total === 1 ? "" : "s"} evenly between them. Diplomatic.`
+          : `You sided with <strong>${esc(m.a > m.b ? PARENT_A : PARENT_B)}</strong>
+             on ${Math.max(m.a, m.b)} of your ${m.total} vote${m.total === 1 ? "" : "s"}.`)
+      : "You didn't get a vote in — next time.";
+    return `<div class="center endwrap">
         <h2 class="question">Thanks for voting ✨</h2>
-        <p class="tagline">Your predictions are sealed. Now go get cake before
-          ${esc(BABY_NAME)} does.</p>
+        <p class="verdict">${yours}</p>
+        ${scoreboard()}
+        <p class="tagline closing">Now go get cake before ${esc(BABY_NAME)} does.</p>
       </div>`;
   }
   const mine = myVotes.get(voteKey());
@@ -726,7 +872,7 @@ function viewGuest() {
     return `<div class="center">
       ${questionBlock()}
       <p class="split">
-        <span class="a">A ${pct(t.a, total)}%</span><span class="dash">—</span><span class="b">${pct(t.b, total)}% B</span>
+        <span class="a">${esc(PARENT_A)} ${pct(t.a, total)}%</span><span class="dash">—</span><span class="b">${pct(t.b, total)}% ${esc(PARENT_B)}</span>
       </p>
       <p class="total">${total} vote${total === 1 ? "" : "s"} cast</p>
       ${optionCards({ asButtons: false, chosen: mine })}
