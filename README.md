@@ -93,8 +93,12 @@ wide tracking — via the `:root[lang="hi"]` rules.
 When the host finishes the last question, both screens show the night's
 totals:
 
+- a crown line naming the winner, and a verdict that gently insults the loser
 - both parents' portraits either side of the split, the winner ringed in gold
 - the overall split — every vote across all the questions, as a percentage
+- **the loser's comeback plan**: the three questions the room was most
+  emphatic about, each with a daft instruction for winning it back next year
+  (edit the `fix` line on any question in `QUESTIONS` to change the joke)
 - how many questions each parent won, plus ties, and the total votes cast
 - the most one-sided question and the closest call
 - a question-by-question breakdown with a crimson/emerald split bar each

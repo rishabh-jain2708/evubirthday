@@ -359,6 +359,32 @@
   .vsnames .a{color:var(--gryff-1)} .vsnames .b{color:#57a86f}
 
   /* ---- final scoreboard ---- */
+  .crown-line{
+    text-align:center; margin:.1em 0 .35em; color:var(--gold-lt);
+    font-size:clamp(1.4rem,4vw,2.4rem); letter-spacing:.01em;
+    text-shadow:0 0 34px rgba(232,198,90,.35);
+  }
+  .comeback{
+    max-width:44em; margin:.4em auto 1.8em; padding:1.1em 1.3em 1.2em;
+    border:1px solid var(--line); border-radius:16px;
+    background:linear-gradient(180deg, rgba(138,18,21,.14), rgba(0,0,0,.28));
+  }
+  .cb-head{
+    margin:0 0 .7em; text-align:center; font-variant:small-caps; letter-spacing:.16em;
+    color:var(--gold-lt); font-size:clamp(.95rem,2.2vw,1.25rem);
+  }
+  .cb-list{margin:0; padding-left:1.4em; display:grid; gap:.7em}
+  .cb-list li{color:var(--cream)}
+  .cb-q{display:block; font-size:clamp(.95rem,2vw,1.1rem)}
+  .cb-score{display:inline-block; font-size:.78rem; letter-spacing:.1em;
+    font-variant:small-caps; color:#e88b8d; margin:.1em 0}
+  .cb-fix{display:block; font-style:italic; color:var(--gold-lt); line-height:1.5}
+  .cb-foot{
+    margin:1em 0 0; text-align:center; color:rgba(241,230,200,.6);
+    font-style:italic; font-size:.9rem;
+  }
+  :root[lang="hi"] .cb-head,
+  :root[lang="hi"] .cb-score{letter-spacing:.02em; font-variant:normal}
   .endwrap{padding-bottom:2em}
   .bigsplit{
     text-align:center; margin:.1em 0 0; line-height:1.25; white-space:nowrap;
@@ -528,52 +554,84 @@ const B = { en: PARENT_B, hi: PARENT_B_HI };
 
 const QUESTIONS = [
   { q:{en:"Who is more likely to spoil the baby?",
-       hi:"बेबी को सबसे ज़्यादा कौन बिगाड़ेगा?"}, a:A, b:B },
+       hi:"बेबी को सबसे ज़्यादा कौन बिगाड़ेगा?"}, a:A, b:B,
+    fix:{en:"Buy something completely unnecessary. Today. Gift-wrap it.",
+         hi:"आज ही कोई बिलकुल बेमतलब की चीज़ ख़रीदिए। गिफ़्ट रैप के साथ।"} },
 
   { q:{en:"Who will say “No” more often?",
-       hi:"“ना” ज़्यादा कौन कहेगा?"}, a:A, b:B },
+       hi:"“ना” ज़्यादा कौन कहेगा?"}, a:A, b:B,
+    fix:{en:"Practise saying no in the mirror. Ten times. With feeling.",
+         hi:"आईने के सामने दस बार “ना” बोलिए। पूरे दम के साथ।"} },
 
   { q:{en:"Who wakes up first when the baby cries?",
-       hi:"बेबी के रोते ही पहले कौन उठेगा?"}, a:A, b:B },
+       hi:"बेबी के रोते ही पहले कौन उठेगा?"}, a:A, b:B,
+    fix:{en:"Sleep with one eye open for a week. No pretending you didn't hear.",
+         hi:"एक हफ़्ते एक आँख खोलकर सोइए। “मैंने सुना ही नहीं” नहीं चलेगा।"} },
 
   { q:{en:"Who takes more photos and videos of the baby?",
-       hi:"बेबी की फ़ोटो और वीडियो ज़्यादा कौन खींचेगा?"}, a:A, b:B },
+       hi:"बेबी की फ़ोटो और वीडियो ज़्यादा कौन खींचेगा?"}, a:A, b:B,
+    fix:{en:"Two hundred photos by Sunday. The blurry ones count.",
+         hi:"रविवार तक दो सौ फ़ोटो। धुँधली वाली भी गिनी जाएँगी।"} },
 
   { q:{en:"Who is more likely to buy something the baby doesn't need? 😂",
-       hi:"बेबी के लिए बेमतलब की चीज़ें कौन ख़रीद लाएगा? 😂"}, a:A, b:B },
+       hi:"बेबी के लिए बेमतलब की चीज़ें कौन ख़रीद लाएगा? 😂"}, a:A, b:B,
+    fix:{en:"One pointless purchase. No justifying it to anyone.",
+         hi:"एक फ़ालतू ख़रीदारी — और किसी को सफ़ाई नहीं देनी।"} },
 
   { q:{en:"Who can calm the baby faster?",
-       hi:"बेबी को जल्दी कौन चुप करा लेगा?"}, a:A, b:B },
+       hi:"बेबी को जल्दी कौन चुप करा लेगा?"}, a:A, b:B,
+    fix:{en:"Learn a lullaby. An actual one, with words, all the way through.",
+         hi:"एक लोरी याद कीजिए — पूरी, शब्दों के साथ।"} },
 
   { q:{en:"Who knows exactly what the baby wants, just by looking at him?",
-       hi:"बेबी को देखते ही कौन समझ जाएगा कि उसे क्या चाहिए?"}, a:A, b:B },
+       hi:"बेबी को देखते ही कौन समझ जाएगा कि उसे क्या चाहिए?"}, a:A, b:B,
+    fix:{en:"Stare lovingly and guess. Someone will be keeping score.",
+         hi:"प्यार से देखिए और अंदाज़ा लगाइए। कोई तो हिसाब रख ही रहा होगा।"} },
 
   { q:{en:"Who gives in first when the baby throws a tantrum?",
-       hi:"बेबी के ज़िद करने पर पहले कौन पिघल जाएगा?"}, a:A, b:B },
+       hi:"बेबी के ज़िद करने पर पहले कौन पिघल जाएगा?"}, a:A, b:B,
+    fix:{en:"Cave at the next tantrum. Dramatically. Bonus points for tears.",
+         hi:"अगली ज़िद पर तुरंत पिघल जाइए। आँसू आ जाएँ तो बोनस।"} },
 
   { q:{en:"Who will be more protective?",
-       hi:"ज़्यादा प्रोटेक्टिव कौन होगा?"}, a:A, b:B },
+       hi:"ज़्यादा प्रोटेक्टिव कौन होगा?"}, a:A, b:B,
+    fix:{en:"Baby-proof one more corner of the house before next weekend.",
+         hi:"अगले वीकेंड से पहले घर का एक और कोना बेबी-प्रूफ़ कीजिए।"} },
 
   { q:{en:"Who will be the stricter parent?",
-       hi:"सख़्त पैरेंट कौन बनेगा?"}, a:A, b:B },
+       hi:"सख़्त पैरेंट कौन बनेगा?"}, a:A, b:B,
+    fix:{en:"Confiscate something. Anything. Look stern while doing it.",
+         hi:"कुछ भी ज़ब्त कर लीजिए — और चेहरा सख़्त रखिए।"} },
 
   { q:{en:"Who will be more nervous when he starts dating?",
-       hi:"जब वो डेटिंग शुरू करेगा, ज़्यादा घबराएगा कौन?"}, a:A, b:B },
+       hi:"जब वो डेटिंग शुरू करेगा, ज़्यादा घबराएगा कौन?"}, a:A, b:B,
+    fix:{en:"Start worrying now. You've got eighteen years to get good at it.",
+         hi:"अभी से घबराना शुरू कीजिए। अठारह साल की प्रैक्टिस मिलेगी।"} },
 
   { q:{en:"Who will help him with his homework?",
-       hi:"होमवर्क में उसकी मदद कौन करेगा?"}, a:A, b:B },
+       hi:"होमवर्क में उसकी मदद कौन करेगा?"}, a:A, b:B,
+    fix:{en:"Revise long division. He'll get there faster than you think.",
+         hi:"भाग करना दोहरा लीजिए। वो आपकी सोच से जल्दी वहाँ पहुँच जाएगा।"} },
 
   { q:{en:"Who will slip him extra pocket money?",
-       hi:"चुपके से ज़्यादा पॉकेट मनी कौन देगा?"}, a:A, b:B },
+       hi:"चुपके से ज़्यादा पॉकेट मनी कौन देगा?"}, a:A, b:B,
+    fix:{en:"Slip him a note when nobody's looking. Start the habit early.",
+         hi:"किसी की नज़र बचाकर एक नोट थमा दीजिए। आदत जल्दी डालिए।"} },
 
   { q:{en:"Who defends him first when someone complains about him?",
-       hi:"कोई उसकी शिकायत करे तो सबसे पहले कौन बचाव करेगा?"}, a:A, b:B },
+       hi:"कोई उसकी शिकायत करे तो सबसे पहले कौन बचाव करेगा?"}, a:A, b:B,
+    fix:{en:"Prepare a speech. Deliver it to the next person who complains.",
+         hi:"एक भाषण तैयार रखिए — अगली शिकायत पर सुना दीजिए।"} },
 
   { q:{en:"Who's the fun parent he goes to when he wants to break a rule? 😂",
-       hi:"नियम तोड़ने हों तो वो किस पैरेंट के पास जाएगा? 😂"}, a:A, b:B },
+       hi:"नियम तोड़ने हों तो वो किस पैरेंट के पास जाएगा? 😂"}, a:A, b:B,
+    fix:{en:"Break one rule. A small one. With style.",
+         hi:"एक नियम तोड़िए — छोटा सा, पर स्टाइल से।"} },
 
   { q:{en:"Who will check his phone when he's a teenager?",
-       hi:"टीनएजर होने पर उसका फ़ोन कौन चेक करेगा?"}, a:A, b:B },
+       hi:"टीनएजर होने पर उसका फ़ोन कौन चेक करेगा?"}, a:A, b:B,
+    fix:{en:"Learn what the apps are before he does. Good luck.",
+         hi:"उससे पहले ऐप्स समझ लीजिए। शुभकामनाएँ।"} },
 ];
 
 /* ----------------------------------------------------------------------------
@@ -652,12 +710,16 @@ const STRINGS = {
     satOut:"You sat this one out.",
     thanks:"Thanks for voting ✨",
     cake:(baby)=>`Now go get cake before ${baby} does.`,
-    finalTally:"the final tally",
-    verdict:(who,won,of)=>`The Great Hall sides with <strong>${who}</strong> — ${won} of ${of} question${of===1?"":"s"}.`,
-    deadHeat:(a,b)=>`A dead heat. ${a} and ${b} split the room down the middle.`,
+    crown:(who)=>`👑 ${who} wins the Great Hall`,
+    drawCrown:()=>"🤝 It's a dead heat",
+    verdict:(who,won,of)=>`The room has spoken: <strong>${who}</strong> takes ${won} of ${of}. The other one is, officially, the sensible parent.`,
+    deadHeat:(a,b)=>`${a} and ${b} split the room straight down the middle. Baby will have to decide this one himself.`,
     questionsTo:(who)=>`questions to ${who}`,
-    tied:"tied",              votesAll:"votes cast in all",
-    noVotes:"no votes",       nothing:"No votes were cast — nothing to count.",
+    tied:()=>"tied",          votesAll:()=>"votes cast in all",
+    noVotes:()=>"no votes",   nothing:()=>"Nobody voted. Baby is deeply unimpressed.",
+    comebackHead:(who)=>`${who}'s comeback plan`,
+    lostBy:(gap)=>`lost by ${gap} points`,
+    comebackFoot:(who)=>`Complete all three and ${who} may appeal at the second birthday.`,
     widest:(q,gap)=>`Most one-sided: <em>${q}</em> (${gap}-point gap).`,
     closest:(q,gap)=>gap===0?`Closest call: <em>${q}</em> — a perfect tie.`:`Closest call: <em>${q}</em> (${gap} points).`,
     yoursSplit:(n)=>`You split your ${n} vote${n===1?"":"s"} evenly between them. Diplomatic.`,
@@ -678,12 +740,16 @@ const STRINGS = {
     satOut:"इस बार आपने वोट नहीं दिया।",
     thanks:"वोट देने के लिए शुक्रिया ✨",
     cake:(baby)=>`अब जल्दी से केक लीजिए, इससे पहले कि ${baby} सब चट कर जाए।`,
-    finalTally:"आख़िरी नतीजा",
-    verdict:(who,won,of)=>`ग्रेट हॉल का फ़ैसला — <strong>${who}</strong>, ${of} में से ${won} सवालों में।`,
-    deadHeat:(a,b)=>`पूरी बराबरी! ${a} और ${b} ने महफ़िल आधी-आधी बाँट ली।`,
+    crown:(who)=>`👑 ग्रेट हॉल के विजेता — ${who}`,
+    drawCrown:()=>"🤝 मुक़ाबला बराबरी पर",
+    verdict:(who,won,of)=>`महफ़िल का फ़ैसला: <strong>${who}</strong> ने ${of} में से ${won} जीते। दूसरे वाले आधिकारिक रूप से “समझदार पैरेंट” घोषित किए जाते हैं।`,
+    deadHeat:(a,b)=>`${a} और ${b} ने महफ़िल आधी-आधी बाँट ली। अब यह फ़ैसला बेबी ख़ुद करेगा।`,
     questionsTo:(who)=>`सवाल ${who} के नाम`,
-    tied:"बराबरी",            votesAll:"कुल वोट",
-    noVotes:"कोई वोट नहीं",    nothing:"एक भी वोट नहीं पड़ा — गिनने को कुछ है ही नहीं।",
+    tied:()=>"बराबरी",        votesAll:()=>"कुल वोट",
+    noVotes:()=>"कोई वोट नहीं", nothing:()=>"एक भी वोट नहीं पड़ा। बेबी बहुत निराश है।",
+    comebackHead:(who)=>`${who} का कमबैक प्लान`,
+    lostBy:(gap)=>`${gap} अंकों से हार`,
+    comebackFoot:(who)=>`तीनों पूरे कीजिए, फिर ${who} अगले जन्मदिन पर दोबारा दावा कर सकते हैं।`,
     widest:(q,gap)=>`सबसे एकतरफ़ा: <em>${q}</em> (${gap} अंकों का फ़ासला)।`,
     closest:(q,gap)=>gap===0?`सबसे कड़ा मुक़ाबला: <em>${q}</em> — पूरी बराबरी।`:`सबसे कड़ा मुक़ाबला: <em>${q}</em> (${gap} अंक)।`,
     yoursSplit:(n)=>`आपने अपने ${n} वोट दोनों में बराबर बाँट दिए। बड़ी समझदारी!`,
@@ -1094,6 +1160,106 @@ const portrait = (k, winner) => `
          onerror="this.closest('.por').classList.add('nopic')">
     <figcaption>${esc(NAME(k))}${winner ? ` <span class="crown">👑</span>` : ""}</figcaption>
   </figure>`;
+
+/* ---- final scoreboard --------------------------------------------------- */
+// Everything the closing screen needs, computed from the vote tallies.
+function overall() {
+  let a = 0, b = 0, wonA = 0, wonB = 0, tied = 0, answered = 0;
+  const rows = QUESTIONS.map((_, i) => {
+    const t = tally(i), tot = t.a + t.b;
+    a += t.a; b += t.b;
+    if (tot) {
+      answered++;
+      if (t.a > t.b) wonA++; else if (t.b > t.a) wonB++; else tied++;
+    }
+    return { i, q: qt(i), t, tot, lead: tot ? Math.abs(pct(t.a, tot) - pct(t.b, tot)) : null };
+  });
+  const scored = rows.filter(r => r.tot);
+  const byLead = [...scored].sort((x, y) => x.lead - y.lead);
+  return { a, b, total: a + b, wonA, wonB, tied, answered, rows, scored,
+           closest: byLead[0] || null, widest: byLead[byLead.length - 1] || null };
+}
+
+// How this particular guest voted across the night.
+function myTake() {
+  let a = 0, b = 0;
+  for (const v of myVotes.values()) v === "a" ? a++ : b++;
+  return { a, b, total: a + b };
+}
+
+/* The losing parent's homework: the three questions the room was most
+   emphatic about, each with its own daft instruction. */
+function comeback(loser, o) {
+  const worst = o.scored
+    .filter(r => (loser === "a" ? r.t.b > r.t.a : r.t.a > r.t.b))
+    .sort((x, y) => y.lead - x.lead)
+    .slice(0, 3);
+  if (!worst.length) return "";
+  return `
+    <div class="comeback">
+      <p class="cb-head">${T().comebackHead(esc(NAME(loser)))}</p>
+      <ol class="cb-list">
+        ${worst.map(r => `<li>
+            <span class="cb-q">${esc(r.q)}</span>
+            <span class="cb-score">${T().lostBy(r.lead)}</span>
+            <span class="cb-fix">${esc(QUESTIONS[r.i].fix[lang])}</span>
+          </li>`).join("")}
+      </ol>
+      <p class="cb-foot">${T().comebackFoot(esc(NAME(loser)))}</p>
+    </div>`;
+}
+
+function scoreboard() {
+  const o = overall();
+  if (!o.total) return `<p class="tagline">${T().nothing()}</p>`;
+
+  const pa = pct(o.a, o.total), pb = pct(o.b, o.total);
+  const draw = o.wonA === o.wonB;
+  const won  = draw ? null : (o.wonA > o.wonB ? "a" : "b");
+  const lost = draw ? null : (won === "a" ? "b" : "a");
+
+  const rows = o.rows.map(r => `
+    <div class="brow">
+      <span class="num">${r.i + 1}</span>
+      <span class="btxt">${esc(r.q)}</span>
+      ${r.tot ? `
+        <span class="bbar"><i class="ba" style="width:${pct(r.t.a, r.tot)}%"></i><i class="bb" style="width:${pct(r.t.b, r.tot)}%"></i></span>
+        <span class="bnum">${pct(r.t.a, r.tot)}–${pct(r.t.b, r.tot)}</span>`
+      : `<span class="bbar empty"></span><span class="bnum quiet">${T().noVotes()}</span>`}
+    </div>`).join("");
+
+  return `
+    <p class="crown-line">${draw ? T().drawCrown() : T().crown(esc(NAME(won)))}</p>
+    <p class="verdict">${draw ? T().deadHeat(esc(NAME("a")), esc(NAME("b")))
+                              : T().verdict(esc(NAME(won)), Math.max(o.wonA, o.wonB), o.answered)}</p>
+
+    <div class="faceoff">
+      ${portrait("a", won === "a")}
+      <div class="vs">
+        <p class="bigsplit">
+          <span class="a">${pa}%</span><span class="dash">—</span><span class="b">${pb}%</span>
+        </p>
+        <p class="vsnames"><span class="a">${esc(NAME("a"))}</span> · <span class="b">${esc(NAME("b"))}</span></p>
+      </div>
+      ${portrait("b", won === "b")}
+    </div>
+
+    <div class="scoreboard">
+      <div class="sc a"><span class="n">${o.wonA}</span><span class="l">${T().questionsTo(esc(NAME("a")))}</span></div>
+      ${o.tied ? `<div class="sc t"><span class="n">${o.tied}</span><span class="l">${T().tied()}</span></div>` : ""}
+      <div class="sc b"><span class="n">${o.wonB}</span><span class="l">${T().questionsTo(esc(NAME("b")))}</span></div>
+      <div class="sc"><span class="n">${o.total}</span><span class="l">${T().votesAll()}</span></div>
+    </div>
+
+    ${lost ? comeback(lost, o) : ""}
+
+    ${o.widest && o.widest.lead > 0 ? `<p class="footnote">
+      ${T().widest(esc(o.widest.q), o.widest.lead)}
+      ${o.closest && o.closest !== o.widest ? T().closest(esc(o.closest.q), o.closest.lead) : ""}
+    </p>` : ""}
+
+    <div class="breakdown">${rows}</div>`;
+}
 
 const questionBlock = () => `
   <p class="qmeta">${T().qOf(state.qIndex + 1, TOTAL)}</p>
