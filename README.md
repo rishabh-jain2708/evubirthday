@@ -43,10 +43,19 @@ hit Begin Voting it shrinks to the top-left corner and stays there for every
 question — out of the way, but still there for anyone arriving late. It
 retires on the closing screen.
 
+Tap that card and the QR fills the screen for anyone at the back of the
+room; close it with the button, a click anywhere outside, or Escape.
+
 It's generated in the page (qrcode-generator, MIT, inlined — no QR service is
 contacted and nothing about your party leaves the browser), and it encodes
 whatever URL the host page is actually served from, so it can't go stale.
 It's hidden below 720px wide, since a phone has no use for it.
+
+## Pacing
+
+There's no timer. A question stays open for exactly as long as you leave it —
+you press *Reveal Results* when the room has finished voting, then *Next
+Question*. Guests can vote right up until you reveal.
 
 ## Music
 
@@ -93,17 +102,6 @@ totals:
 Guests additionally see their own line — which parent they sided with, and
 how often. That's computed from the votes held in their own tab, so it's
 personal to each phone and nothing about individual voters is stored.
-
-## The 20-second timer
-
-Each question runs a `QUESTION_SECONDS` countdown (20 by default, at the top
-of `index.html`). Both screens show the same clock — every device counts
-against Firebase's server time, not its own — and at zero voting locks and
-the host screen reveals the results automatically. The host can still hit
-*Reveal Results* early.
-
-The auto-reveal is written by the host's browser, so the host screen needs to
-stay open for it to fire.
 
 ## Setup (~3 minutes, free tier)
 
